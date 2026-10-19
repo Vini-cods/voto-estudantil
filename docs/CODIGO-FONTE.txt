@@ -1,0 +1,26 @@
+CODIGO-FONTE E VERIFICACAO
+
+A aplicacao usa C# / .NET Framework e HTML/CSS/JavaScript locais.
+Nao ha servidor externo, banco remoto ou dependencias a baixar.
+Program.cs implementa o servidor restrito ao proprio notebook e a gravacao.
+Os arquivos da interface ficam em ../web/.
+
+Recompilar no Windows, com a urna fechada:
+  powershell -File build.ps1 -OutputDirectory ..
+
+Testes de integracao, com Python 3.10 ou superior instalado:
+  python test_urna.py --exe ../UrnaEstudantil.exe --web-dir ../web
+
+Execute esses comandos nesta pasta codigo-fonte.
+Os testes usam somente a biblioteca padrao do Python e criam os dados
+ficticios em pastas temporarias. Nao usam a pasta Dados da urna escolar.
+O Python e o compilador NAO sao necessarios para usar o executavel pronto.
+
+O fechamento da urna e definitivo e nao ha botao de apagar votos.
+Para outra eleicao, utilize uma nova copia limpa do pacote original.
+Preserve integralmente a pasta da eleicao anterior e seus relatorios.
+
+Os dados locais nao possuem assinatura digital nem criptografia em disco.
+As validacoes conferem estrutura, identidade da eleicao, duplicidades e
+totais, mas nao substituem a guarda dos arquivos e a supervisao presencial.
+O relatorio de verificacao esta em VALIDACAO.md.

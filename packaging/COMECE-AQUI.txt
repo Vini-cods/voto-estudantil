@@ -1,0 +1,43 @@
+URNA ESTUDANTIL - ARACI ZEBRAL TEIXEIRA
+Versao 1.0 - 19/10/2026
+
+1. Extraia o ZIP. Copie a PASTA INTEIRA para o disco de cada notebook Windows.
+   Faca essas copias antes de iniciar qualquer urna.
+2. Execute UrnaEstudantil.exe. O navegador abre automaticamente.
+   Mantenha a janela do programa aberta. INICIAR.cmd tambem inicia o programa
+   e mantem mensagens de erro visiveis se houver algum problema.
+3. Entre em Comissao. Crie uma senha numerica (6 a 20 digitos).
+4. Use um nome de urna DIFERENTE em cada notebook. Ex.: Urna 01, Urna 02.
+   A escola, o titulo da eleicao e as chapas devem ser IGUAIS em todos.
+5. Adicione as fotos das representantes e dos grupos. Salve a configuracao.
+   Exportar/Importar configuracao leva as mesmas fotos/chapas aos outros
+   notebooks sem levar votos, senha ou identidade da urna.
+6. Abra a votacao quando a configuracao estiver pronta.
+7. Finalize com a senha da comissao. O resultado CSV para Excel sera baixado.
+   Baixe TAMBEM o arquivo JSON da urna: ele e usado para SOMAR URNAS.
+8. Leve os JSONs de todos os notebooks a uma maquina e use Somar urnas.
+   Exporte o resultado geral para Excel ou imprima/salve como PDF.
+
+CHAPAS JA CADASTRADAS:
+01 - Chapa Conexao
+07 - Lideranca Jovem
+10 - Renascer
+
+IMPORTANTE PARA USAR EM VARIOS NOTEBOOKS:
+Cada notebook guarda votos independentemente e funciona sem internet.
+Divida as turmas/listas entre os notebooks: o sistema nao sabe em tempo real
+se um aluno ja votou em OUTRO notebook. A soma confere duplicidades de
+nome+serie e bloqueia a apuracao se encontra repeticao.
+Use o mesmo padrao de serie e turma e confira os alunos presencialmente.
+
+A pasta Dados e criada no primeiro uso. Nao apague, mova, edite nem substitua
+essa pasta durante a eleicao. Nao copie uma urna ja iniciada para criar outra.
+Guarde uma copia da pasta completa apos o encerramento.
+
+O resultado guarda contagens; a presenca guarda nomes e series. O sistema
+nao cria uma lista ligando cada aluno a uma chapa. O computador e os arquivos
+precisam ficar sob supervisao da comissao; trata-se de uma urna escolar,
+sem as garantias de seguranca de uma urna oficial.
+
+Este pacote inicia SEM votos e SEM senha. As chapas Lideranca Jovem 07 e Renascer 10 ja incluem fotos, propostas e integrantes. Faltam os materiais da Chapa Conexao 01.
+Leia LEIA-ME.html ou Manual-de-uso.pdf para as instrucoes completas.

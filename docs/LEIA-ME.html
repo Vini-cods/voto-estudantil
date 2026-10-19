@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guia de uso • Urna Estudantil</title>
+<style>
+:root{--ink:#172936;--muted:#536570;--line:#d7e1e5;--green:#08644c;--pale:#eef7f3;--gold:#f4b941;--paper:#fff;--back:#eff3f5}
+*{box-sizing:border-box}html{font-size:16px}body{margin:0;background:var(--back);color:var(--ink);font-family:Segoe UI,Arial,sans-serif;line-height:1.5}.page{max-width:920px;margin:28px auto;background:var(--paper);padding:44px 52px;box-shadow:0 8px 36px #1729360d;border:1px solid var(--line)}.eyebrow{color:var(--green);font-weight:700;font-size:.78rem;letter-spacing:.13em;text-transform:uppercase}.heading{display:flex;align-items:center;gap:16px;border-bottom:2px solid var(--ink);padding-bottom:21px;margin-bottom:25px}.mark{width:48px;height:48px;border:2px solid var(--green);border-radius:12px;display:grid;place-items:center;color:var(--green);font-size:28px;font-weight:700;flex:none}h1{font-size:2rem;line-height:1.13;letter-spacing:-.04em;margin:4px 0 0}h2{font-size:1.42rem;line-height:1.2;letter-spacing:-.02em;margin:30px 0 12px}h3{font-size:1rem;margin:19px 0 6px}p{margin:0 0 12px}.lead{font-size:1.05rem;color:var(--muted);max-width:70ch}.note{padding:15px 18px;background:var(--pale);border-left:4px solid var(--green);margin:18px 0}.warning{background:#fff8e8;border-color:var(--gold)}.note p:last-child{margin-bottom:0}.steps{list-style:none;counter-reset:step;margin:20px 0 0;padding:0}.steps li{counter-increment:step;position:relative;padding:0 0 18px 47px;margin:0 0 2px}.steps li:before{content:counter(step);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--green);color:white;display:grid;place-items:center;font-weight:700}.steps strong{display:block;margin-bottom:3px}.steps span{display:block;color:var(--muted)}ul,ol{padding-left:22px;margin:8px 0 16px}li{margin:5px 0}code{font-family:Consolas,monospace;background:#f1f4f5;border-radius:3px;padding:1px 4px;font-size:.9em;overflow-wrap:anywhere}strong{font-weight:650}table{border-collapse:collapse;width:100%;font-size:.92rem;margin:14px 0 20px}th,td{text-align:left;vertical-align:top;border-bottom:1px solid var(--line);padding:10px 12px}th{background:#f1f5f6;font-weight:650}th:first-child,td:first-child{padding-left:0;width:30%}th:first-child{padding-left:12px}td:first-child{font-weight:650}.footer{display:flex;justify-content:space-between;gap:20px;margin-top:30px;padding-top:13px;border-top:1px solid var(--line);font-size:.77rem;color:var(--muted)}.formula{font-size:1rem;font-weight:650;padding:13px 16px;border:1px solid var(--line);border-radius:7px;background:#fafcfc}.toolbar{max-width:920px;margin:25px auto 0;display:flex;justify-content:flex-end}.print{font:600 .9rem Segoe UI,Arial,sans-serif;cursor:pointer;background:var(--green);color:#fff;border:0;border-radius:7px;padding:11px 17px}a{color:var(--green)}.small{font-size:.87rem;color:var(--muted)}
+@page{size:A4;margin:15mm 16mm} @media print{html{font-size:10pt}body{background:white;line-height:1.35}p{margin-bottom:8px}li{margin:3px 0}ul,ol{margin-top:6px;margin-bottom:12px}.toolbar{display:none}.page{max-width:none;margin:0;padding:0;border:0;box-shadow:none;break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}.heading{margin-bottom:18px;padding-bottom:16px}h1{font-size:25pt}h2{font-size:15pt;margin-top:18px}h3{font-size:11pt}.steps li{padding-bottom:8px}.note{break-inside:avoid;padding:10px 13px;margin:14px 0}tr{break-inside:avoid}.footer{margin-top:18px}.lead{font-size:10.5pt}table{font-size:9pt;line-height:1.32}th,td{padding:5px 9px}p,li{orphans:3;widows:3}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media(max-width:650px){.page{margin:12px;padding:25px 21px}.toolbar{margin:15px 15px 0}h1{font-size:1.65rem}.heading{gap:12px}.mark{width:40px;height:40px}th,td{padding:9px 7px}.footer{display:block}}
+</style>
+</head>
+<body>
+<div class="toolbar"><button class="print" onclick="window.print()">Imprimir / salvar este guia em PDF</button></div>
+
+<section class="page">
+  <header class="heading"><div class="mark" aria-hidden="true">✓</div><div><div class="eyebrow">Guia da comissão eleitoral • 01</div><h1>Urna Estudantil</h1></div></header>
+  <p class="lead">Votação presencial para três candidaturas, em notebooks com Windows 10 ou 11. O programa funciona sem internet e salva os dados no próprio computador.</p>
+  <div class="note"><p><strong>O pendrive distribui o programa. Cada notebook guarda sua própria urna.</strong> Copie a pasta do pacote para o disco local de cada notebook antes de usar. Execute <code>UrnaEstudantil.exe</code> dentro dessa pasta. O aplicativo usa o .NET Framework do Windows e os arquivos web que acompanham o pacote; mantenha todos juntos.</p></div>
+  <h2>Preparação em seis passos</h2>
+  <ol class="steps">
+    <li><strong>Copie um pacote ainda não iniciado para cada notebook.</strong><span>Use uma pasta local com permissão de gravação. Não execute a votação diretamente no pendrive e não faça uma nova urna copiando uma pasta que já foi iniciada.</span></li>
+    <li><strong>Abra o executável e defina o PIN administrativo.</strong><span>Na primeira execução, crie um PIN com pelo menos seis dígitos. Guarde-o com a comissão e fora da vista dos alunos. O PIN é necessário para administrar e finalizar.</span></li>
+    <li><strong>Identifique a eleição e esta urna.</strong><span>A escola já está configurada como “Araci Zebral Teixeira”. Dê a cada urna um nome diferente, como “Notebook 01 — sala A”. Cada instalação tem sua própria identificação e seu PIN.</span></li>
+    <li><strong>Cadastre as três candidaturas e suas imagens.</strong><span>As chapas já estão cadastradas: Conexão — 01; Liderança Jovem — 07; Renascer — 10. Preserve os zeros iniciais. Na Comissão, aba “Configuração”, inclua a foto da candidata e a foto do grupo de cada chapa, confira tudo e use “Salvar configuração”. Depois use “Exportar configuração” e, nos demais notebooks, “Importar configuração”. Isso leva escola, título, nomes, números e fotos, preservando nome da urna, PIN, identificação e votos locais. As fotos reais ainda precisam ser adicionadas.</span></li>
+    <li><strong>Organize as turmas e confira a operação.</strong><span>Atribua cada turma a um único notebook. Tenha uma lista de alunos e um responsável para conferir a identidade. Se quiser ensaiar, use uma cópia separada do pacote e reserve cópias intactas para a eleição real.</span></li>
+    <li><strong>Abra a votação somente depois da conferência.</strong><span>Use “Abrir votação” quando a urna estiver pronta. A configuração passa a valer para os votos reais; mantenha os dados iguais em todas as urnas.</span></li>
+  </ol>
+  <div class="note warning"><p><strong>Atenção ao copiar:</strong> a pasta <code>Dados</code> contém o estado da urna. Não a apague, mova, renomeie ou substitua durante a eleição. Não distribua uma pasta já iniciada para outro notebook: isso duplicaria a identificação da urna.</p></div>
+  <footer class="footer"><span>Uso local e supervisionado pela escola</span><span>Preparação • 1 de 4</span></footer>
+</section>
+
+<section class="page">
+  <header class="heading"><div class="mark" aria-hidden="true">✓</div><div><div class="eyebrow">Guia da comissão eleitoral • 02</div><h1>Durante a votação</h1></div></header>
+  <p class="lead">A tela inicial apresenta as três chapas. Um responsável deve orientar a fila, conferir a identidade de cada aluno e preservar a privacidade no momento da escolha.</p>
+  <h2>O caminho do aluno</h2>
+  <ol class="steps">
+    <li><strong>Informar nome completo e série/turma.</strong><span>Confira a grafia e use um padrão de turma em toda a escola. Esses dados servem para a lista de comparecimento e para a verificação de repetição.</span></li>
+    <li><strong>Digitar os dois dígitos da candidatura.</strong><span>A tela de votação usa um teclado inspirado na urna brasileira. Ao completar um número cadastrado, aparecem a foto da candidata e a imagem do seu grupo.</span></li>
+    <li><strong>Conferir e escolher a ação.</strong><span>“CORRIGE” limpa a escolha para digitar novamente. “BRANCO” seleciona voto em branco. Um número não cadastrado corresponde a voto nulo; confira a indicação antes de confirmar.</span></li>
+    <li><strong>Pressionar “CONFIRMA”.</strong><span>O aplicativo grava o voto. Somente depois da confirmação de gravação mostra “FIM” e retorna à tela inicial, pronta para o próximo aluno.</span></li>
+  </ol>
+  <h2>Controle de presença e privacidade</h2>
+  <p>O programa mantém <strong>as quantidades de votos por candidatura, os brancos e os nulos</strong>, além de uma <strong>lista de comparecimento separada, em ordem alfabética</strong>. Os relatórios não mostram em quem cada aluno votou.</p>
+  <p>Nome e série não comprovam identidade por si só. A conferência pela equipe da escola é parte do processo. A urna pode detectar repetição dos dados no próprio notebook, mas uma urna sem internet não consulta os outros computadores em tempo real.</p>
+  <div class="note warning"><p><strong>Uma turma, um notebook.</strong> Distribua os alunos por turmas e confira a lista. O mesmo estudante pode tentar usar dois computadores diferentes; a consolidação verifica repetições de nome e turma entre as urnas e recusa o fechamento conjunto se encontrar conflito.</p></div>
+  <h2>Cuidados durante o uso</h2>
+  <ul>
+    <li>Mantenha o notebook ligado à tomada e com espaço livre no disco.</li>
+    <li>Evite suspensão automática e mantenha os alunos apenas na tela de votação.</li>
+    <li>Não compartilhe o PIN administrativo. Não altere os arquivos de dados.</li>
+    <li>Não copie uma urna iniciada para criar outra; não faça reinicialização ou limpeza de dados durante a eleição.</li>
+    <li>Se houver erro, interrompa a fila nessa urna e preserve a pasta completa.</li>
+  </ul>
+  <div class="note"><p><strong>Limite do sistema:</strong> esta aplicação escolar não tem certificação nem a segurança de uma urna do TSE. Comparar cópias da pasta feitas durante a votação pode permitir inferir uma escolha pela diferença entre contagens e comparecimentos. Restrinja os arquivos à comissão; não há garantia de sigilo contra perícia ou monitoramento.</p></div>
+  <footer class="footer"><span>Confira a identidade antes de liberar o aluno</span><span>Votação • 2 de 4</span></footer>
+</section>
+
+<section class="page">
+  <header class="heading"><div class="mark" aria-hidden="true">✓</div><div><div class="eyebrow">Guia da comissão eleitoral • 03</div><h1>Finalizar e reunir os resultados</h1></div></header>
+  <p class="lead">Cada notebook tem uma contagem independente. Para obter o resultado da escola, encerre cada urna e depois reúna seus arquivos na ferramenta de consolidação.</p>
+  <h2>1. Finalize em cada notebook</h2>
+  <ol>
+    <li>Espere o último aluno terminar e confirme que a tela voltou ao início.</li>
+    <li>Use “Finalizar votação” e informe o PIN administrativo. Após confirmar o encerramento definitivo, o CSV para Excel é baixado automaticamente. Os controles ficam na área “Comissão”, na aba “Apuração”.</li>
+    <li>Confira o nome da urna, a contagem de cada candidatura, os votos brancos e nulos e o total de comparecimento.</li>
+    <li>Se precisar baixar novamente o CSV, use “Baixar resultado (Excel)”. Salve também “Baixar arquivo da urna (JSON)”: ele é obrigatório para a consolidação. “Baixar lista de presença” exporta o comparecimento. Para PDF, use “Imprimir / PDF” e escolha a impressora PDF do Windows.</li>
+    <li>Copie os arquivos para o pendrive, mantendo nomes diferentes por notebook. Preserve também a pasta completa do programa com <code>Dados</code> no notebook.</li>
+  </ol>
+  <div class="formula">Total de votos = votos das três candidaturas + brancos + nulos = comparecimentos confirmados</div>
+  <p class="small" style="margin-top:9px">Os votos brancos e nulos entram no total geral. Compare o total com a lista de comparecimento; não some essa lista novamente aos votos.</p>
+  <h2>2. Consolide em um só computador</h2>
+  <ol>
+    <li>Na área “Comissão”, abra a aba “Somar urnas” e selecione os arquivos JSON finais de todos os notebooks.</li>
+    <li>Confira a relação de urnas incluídas. A ferramenta identifica a mesma urna para evitar contagem em dobro; exportações repetidas não devem virar votos extras.</li>
+    <li>A consolidação verifica a configuração da eleição e a consistência dos totais. Todos os arquivos precisam pertencer à mesma eleição, com as mesmas candidaturas e números.</li>
+    <li>Se houver um mesmo nome e turma normalizados em mais de uma urna, o sistema recusa a consolidação. A comissão deve verificar a ocorrência antes de certificar o resultado; não edite os arquivos para ocultar o conflito.</li>
+    <li>Depois da validação, salve o resultado consolidado e, se desejar, imprima ou salve a versão em PDF.</li>
+  </ol>
+  <div class="note"><p><strong>Guarde o JSON.</strong> CSV e PDF são relatórios para leitura. O JSON é o arquivo de intercâmbio necessário para reunir as urnas e conferir os dados. Ele pode conter a lista de comparecimento; mantenha-o sob acesso da comissão.</p></div>
+  <h2>3. Arquive a eleição</h2>
+  <p>Mantenha pelo menos duas cópias dos arquivos finais, em locais diferentes: por exemplo, no computador da comissão e em um pendrive guardado. Registre quais urnas foram usadas e quais arquivos entraram no resultado. Restrinja o acesso às listas de alunos e aos backups.</p>
+  <footer class="footer"><span>Conferência e guarda dos arquivos pela comissão</span><span>Apuração • 3 de 4</span></footer>
+</section>
+
+<section class="page">
+  <header class="heading"><div class="mark" aria-hidden="true">✓</div><div><div class="eyebrow">Guia da comissão eleitoral • 04</div><h1>Arquivos e solução de problemas</h1></div></header>
+  <h2>O que deve ser preservado</h2>
+  <table>
+    <thead><tr><th>Item</th><th>Para que serve</th></tr></thead>
+    <tbody>
+      <tr><td><code>UrnaEstudantil.exe</code></td><td>Inicia o aplicativo no Windows. Abra-o a partir da pasta local da urna.</td></tr>
+      <tr><td>Arquivos web do pacote</td><td>Formam as telas, os estilos e a lógica da interface. Mantenha a estrutura e os nomes originais.</td></tr>
+      <tr><td>Pasta <code>Dados</code></td><td>Guarda a eleição, sua identificação, configuração, contagens e comparecimentos. É a parte crítica para recuperar a urna.</td></tr>
+      <tr><td>JSON final de cada urna</td><td>Permite validar e consolidar resultados. Guarde junto dos relatórios finais.</td></tr>
+      <tr><td>CSV e PDF</td><td>Permitem conferir, imprimir e arquivar os resultados. O CSV abre no Excel; o PDF é gerado pela impressão.</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Backup da pasta:</strong> após finalizar a votação, feche o aplicativo e copie a pasta completa, incluindo <code>Dados</code>. Guarde essa cópia como backup da mesma urna; não a use para abrir uma nova urna em outro notebook. Evite produzir cópias sucessivas durante a votação: a comparação entre elas pode expor escolhas individuais. Restrinja o acesso aos dados e às exportações.</p>
+  <h2>Se algo não funcionar</h2>
+  <table>
+    <thead><tr><th>Situação</th><th>O que fazer</th></tr></thead>
+    <tbody>
+      <tr><td>O programa não abre</td><td>Confirme que a pasta foi copiada inteira para o disco local e que está usando Windows 10 ou 11. Se o Windows ou a política da escola bloquear o executável, peça ao responsável de TI para verificar. Não remova arquivos do pacote.</td></tr>
+      <tr><td>Erro ao salvar um voto</td><td>A tela de votação permanece aberta e não deve indicar sucesso. Pare o atendimento, confira espaço livre e permissão de gravação na pasta. Não mande o aluno votar em outra urna sem a comissão verificar o que foi registrado.</td></tr>
+      <tr><td>Falta de energia ou fechamento inesperado</td><td>Reabra a mesma instalação e confira o estado preservado. Se o último atendimento não chegou a mostrar “FIM”, verifique o comparecimento antes de liberar outra tentativa. Preserve os arquivos se houver dúvida.</td></tr>
+      <tr><td>Arquivo de dados inválido ou corrompido</td><td>O programa não deve apagar os votos nem iniciar uma eleição vazia automaticamente. Pare essa urna, preserve a pasta e procure o responsável técnico. Use um backup validado da mesma urna com cuidado para não perder ou repetir votos posteriores à cópia.</td></tr>
+      <tr><td>Consolidação recusada</td><td>Leia o motivo: eleição/configuração diferente, totais inconsistentes ou aluno repetido entre urnas. Confira os JSON finais e os registros da comissão. Não modifique o conteúdo dos arquivos para forçar a aceitação.</td></tr>
+      <tr><td>PIN esquecido</td><td>Procure a comissão responsável. Não apague <code>Dados</code> para contornar o acesso: isso elimina o estado local da eleição.</td></tr>
+    </tbody>
+  </table>
+  <div class="note warning"><p><strong>Não reinicie uma eleição para resolver uma falha.</strong> Primeiro preserve o executável, os arquivos web, a pasta <code>Dados</code> e as exportações existentes. Uma urna reserva deve receber uma cópia ainda não iniciada e um nome próprio, com registro da ocorrência pela comissão.</p></div>
+  <footer class="footer"><span>Sem internet • dados locais por notebook • exportações sob guarda da escola</span><span>Suporte • 4 de 4</span></footer>
+</section>
+</body>
+</html>

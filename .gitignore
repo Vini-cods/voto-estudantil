@@ -1,0 +1,33 @@
+# Scratch files and generated local deliverables
+/work/
+/outputs/
+/dist/
+/urna-build/
+
+# A live election's data must never enter source history
+**/[Dd]ados/
+**/[Dd]atos/
+**/urna.json
+**/urna.json.*
+**/*-urna.json
+**/*-presenca.csv
+**/*-resultado.csv
+**/apuracao-geral-gremio.json
+**/apuracao-geral-gremio.csv
+**/configuracao-chapas.json
+*.lock
+*.log
+*.pid
+*.tmp
+
+# Local credentials, editor/runtime caches
+.env
+.env.*
+*.pem
+*.key
+__pycache__/
+*.pyc
+.vs/
+.vscode/
+Thumbs.db
+Desktop.ini
