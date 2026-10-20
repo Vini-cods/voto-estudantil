@@ -1,6 +1,6 @@
 # Verificação da urna portátil
 
-Em **20/10/2026**, o executável final passou pelo roteiro completo de integração, incluindo o funcionamento como arquivo único, o cadastro das três chapas, as fotos de grupo e a compatibilidade com arquivos antigos. A execução terminou em `ALL INTEGRATION CHECKS PASSED`.
+Em **20/10/2026**, o executável final passou pelo roteiro completo de integração, incluindo o funcionamento como arquivo único, a votação imediata sem senha ou preparação, as três chapas com fotos de grupo e a compatibilidade com arquivos antigos. A execução terminou em `ALL INTEGRATION CHECKS PASSED`.
 
 ## Execução
 
@@ -18,10 +18,13 @@ python tests/test_urna.py --exe dist/Urna-Araci-Zebral/UrnaEstudantil.exe --web-
 - A página embutida recebeu o token correto da sessão. JavaScript, CSS, favicon, três fotos de grupo e dois logos PNG foram servidos com conteúdo idêntico às fontes. Nenhum recurso web foi extraído para a pasta do programa, para `Dados` ou para o diretório de trabalho.
 - Nesse modo, um voto fictício foi confirmado e preservado após reiniciar. O arquivo de dados existente permaneceu idêntico na reabertura; a apuração após encerrar teve exatamente um voto e um participante.
 - O argumento explícito `--web-dir` foi comprovado com uma alteração exclusiva na página externa de teste. Um diretório inexistente ou com um recurso obrigatório ausente impediu a abertura antes de criar a nova pasta de dados.
+- Uma urna nova começa aberta, com as três chapas prontas para receber votos, sem gravar credenciais de senha. Um voto foi registrado antes de qualquer acesso à tela de encerramento.
 - As três chapas têm números `01`, `07` e `10`, representantes e oito integrantes por chapa. A Conexão tem oito propostas; a Liderança Jovem, seis; a Renascer, dez. Os dois alunos chamados Pyetro, de séries diferentes, permanecem distintos.
 - As três fotos de grupo recebidas no estado inicial são idênticas, byte a byte, aos arquivos originais distribuídos. O estado público não apresenta retratos individuais.
-- Configurações antigas com retratos individuais continuam sendo aceitas, mas o retrato não é salvo em novas configurações. Ao abrir um arquivo de dados antigo, as respostas pública e administrativa ocultam o retrato sem reescrever o arquivo existente.
-- Requisições sem o token da sessão, operações administrativas sem autorização, PIN incorreto e tentativa de configurar novamente uma urna preparada são recusados.
+- O acesso local ao encerramento não solicita senha. O pedido de acesso exige o token da página e retorna uma sessão; uma tentativa de encerrar sem essa sessão é recusada. Os antigos comandos de preparação, configuração, abertura e login são recusados sem alterar o arquivo de dados.
+- Arquivos antigos com votação aberta ou encerrada, quatro votos, retrato individual e credenciais antigas foram lidos sem mudar seus bytes. As respostas ocultam retratos e credenciais; o acesso ao encerramento não usa a senha antiga.
+- Arquivos antigos em preparação, completos e sem votos, passaram automaticamente para votação aberta, com ou sem credenciais antigas. Nomes, números, propostas, integrantes, imagens, identificação da urna e demais dados existentes foram preservados. Uma segunda abertura não repetiu a gravação da migração.
+- Uma preparação antiga incompleta ou com votos incompatíveis foi recusada, sem sobrescrever o arquivo.
 - Duas confirmações simultâneas com a mesma identificação registram somente um voto. Nomes repetidos com diferenças de acento, maiúsculas ou espaços são reconhecidos como duplicados quando a série corresponde.
 - Reiniciar o programa preserva o estado aberto ou encerrado e as contagens. Depois do encerramento, novos alunos e identificações pendentes não conseguem votar; a exportação permanece idêntica após reiniciar.
 - Durante a votação, os estados público e administrativo não mostram contagens por candidata nem a lista de alunos. Não é criado histórico automático `.bak` a cada voto.

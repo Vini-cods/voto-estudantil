@@ -1,21 +1,23 @@
 URNA ESTUDANTIL - ARACI ZEBRAL TEIXEIRA
-Versao 1.1 - 20/10/2026
+Versao 1.2 - 20/10/2026
 
 1. Baixe UrnaEstudantil.exe. Crie uma pasta propria no disco local de cada
    notebook Windows e copie somente o EXE para ela.
 2. Abra o EXE. Fotos, logotipos e interface ja estao incluidos; o navegador
    abre offline, sem instalacao ou extracao. Mantenha o programa aberto.
    O ZIP completo e opcional, com manuais, fontes e INICIAR.cmd de apoio.
-3. Entre em Comissao. Crie uma senha numerica (6 a 20 digitos).
-4. Use um nome de urna DIFERENTE em cada notebook. Ex.: Urna 01, Urna 02.
-   A escola, o titulo da eleicao e as chapas devem ser IGUAIS em todos.
-5. Confira uma foto de grupo por chapa, nomes, propostas e integrantes.
-   Salve a configuracao. Exportar/Importar leva as mesmas fotos/chapas aos outros
-   notebooks sem levar votos, senha ou identidade da urna.
-6. Abra a votacao quando a configuracao estiver pronta.
-7. Finalize com a senha da comissao. O resultado CSV para Excel sera baixado.
+3. A primeira execucao ja abre a votacao com as tres chapas prontas.
+   Cada notebook recebe automaticamente um nome: Urna XXXXXXXX (8 caracteres).
+4. Atribua cada turma a um unico notebook e anote essa distribuicao.
+   Confira presencialmente a identidade dos alunos.
+5. O aluno informa nome e serie/turma, digita os dois digitos e CONFIRMA.
+   Apos salvar, aparece FIM e a tela volta ao inicio para o proximo aluno.
+6. Ao terminar, use Finalizar votacao. Marque a confirmacao de encerramento
+   definitivo e use Finalizar e ver resultado. O CSV para Excel sera baixado.
+7. Confira os resultados e baixe os relatorios desejados.
    Baixe TAMBEM o arquivo JSON da urna: ele e usado para SOMAR URNAS.
-8. Leve os JSONs de todos os notebooks a uma maquina e use Somar urnas.
+8. Leve os JSONs de todos os notebooks a uma maquina. Na urna encerrada,
+   use Ver resultados e depois Somar urnas.
    Exporte o resultado geral para Excel ou imprima/salve como PDF.
 
 CHAPAS JA CADASTRADAS:
@@ -43,8 +45,10 @@ Guarde uma copia da pasta completa apos o encerramento.
 
 O resultado guarda contagens; a presenca guarda nomes e series. O sistema
 nao cria uma lista ligando cada aluno a uma chapa. O computador e os arquivos
-precisam ficar sob supervisao da comissao; trata-se de uma urna escolar,
+precisam ficar sob supervisao da escola; trata-se de uma urna escolar,
 sem as garantias de seguranca de uma urna oficial.
 
-Este pacote inicia SEM votos e SEM senha, com as tres chapas configuradas.
+No primeiro uso, a urna inicia SEM votos e ja aberta para votar.
+Ao retomar uma pasta existente, os dados e o estado sao preservados;
+uma urna encerrada continua encerrada e permite consultar os resultados.
 Leia LEIA-ME.html ou Manual-de-uso.pdf para as instrucoes completas.

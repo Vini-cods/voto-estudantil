@@ -26,11 +26,8 @@ import urllib.request
 HERE = Path(__file__).resolve().parent
 PROJECT = HERE.parent
 ROUTES = {
-    "setup": "/api/admin/setup",
-    "login": "/api/admin/login",
+    "access": "/api/admin/access",
     "state": "/api/admin/state",
-    "config": "/api/admin/config",
-    "open": "/api/admin/open",
     "identify": "/api/identify",
     "vote": "/api/vote",
     "close": "/api/admin/close",
@@ -38,13 +35,6 @@ ROUTES = {
     "report": "/api/admin/report",
     "consolidate": "/api/admin/consolidate",
 }
-PIN = "583719"
-CANDIDATES = [
-    {"id": "c1", "name": "Chapa Aurora", "number": "01", "portrait": "", "groupPhoto": "", "proposals": ""},
-    {"id": "c2", "name": "Chapa Futuro", "number": "07", "portrait": "", "groupPhoto": "",
-     "proposals": "Primeira proposta de teste.\nSegunda proposta de teste."},
-    {"id": "c3", "name": "Chapa União", "number": "10", "portrait": "", "groupPhoto": "", "proposals": ""},
-]
 EXPECTED = {"c1": 1, "c2": 1, "c3": 0, "blank": 1, "nullVote": 1}
 
 
@@ -149,11 +139,10 @@ class Urn:
         require(200 <= status < 300, f"{name}: HTTP {status} {value!r}")
         return value
 
-    def setup(self, name="Notebook 1", candidates=None):
-        value = self.call("setup", {"pin": PIN, "school": "Escola de Testes",
-                                   "electionTitle": "Grêmio 2026", "urnName": name,
-                                   "candidates": copy.deepcopy(CANDIDATES if candidates is None else candidates)})
+    def access(self):
+        value = self.call("access", {})
         self.admin = value["adminToken"]
+        require(bool(self.admin), "Session access without a password returned no token")
         return value
 
     def state(self):
@@ -212,35 +201,89 @@ def check_group_defaults(public, web):
             "The two distinct Pyetro students were merged or changed")
 
 
-def check_legacy_portraits(exe, web, data):
-    # Synthetic one-pixel fixture: never edits or creates a supplied student photograph.
+def check_no_credentials(data):
+    stored = json.loads((data / "urna.json").read_text(encoding="utf-8-sig"))
+    require(not any(stored.get(key) for key in ("credentials", "pin", "password", "senha")),
+            "A fresh election saved password credentials")
+
+
+def check_legacy_states(exe, web, data_root, baseline):
+    """Only synthetic local fixtures; preserve old votes and configured candidate data."""
     portrait = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9kR0sAAAAASUVORK5CYII="
-    candidates = copy.deepcopy(CANDIDATES)
-    candidates[0]["portrait"] = portrait
-    urn = Urn(exe, web, data)
-    try:
-        urn.start()
-        urn.setup(candidates=candidates)
-        require(not urn.request("/api/state")[1]["candidates"][0].get("portrait"),
-                "Importing a legacy configuration exposed an individual portrait")
-        urn.stop()
-        state_path = data / "urna.json"
-        stored = json.loads(state_path.read_text(encoding="utf-8-sig"))
-        require(not stored["candidates"][0].get("portrait"),
-                "A newly saved configuration retained a legacy individual portrait")
-        stored["candidates"][0]["portrait"] = portrait
-        legacy_bytes = json.dumps(stored, ensure_ascii=False).encode("utf-8")
-        state_path.write_bytes(legacy_bytes)
-        urn.start()
-        require(not urn.request("/api/state")[1]["candidates"][0].get("portrait"),
-                "Public state exposed a portrait from an existing data file")
-        urn.admin = urn.call("login", {"pin": PIN})["adminToken"]
-        require(not urn.state()["candidates"][0].get("portrait"),
-                "Administrator state exposed a portrait from an existing data file")
-        require(state_path.read_bytes() == legacy_bytes,
-                "Reading an existing data file rewrote or removed its legacy portrait")
-    finally:
-        urn.stop()
+    credentials = {"salt": base64.b64encode(b"0" * 24).decode("ascii"),
+                   "hash": base64.b64encode(b"1" * 32).decode("ascii"), "iterations": 150000}
+
+    def save_fixture(name, value):
+        data = data_root / name
+        data.mkdir(parents=True)
+        raw = json.dumps(value, ensure_ascii=False).encode("utf-8")
+        (data / "urna.json").write_bytes(raw)
+        return data, raw
+
+    for status in ("open", "closed"):
+        legacy = copy.deepcopy(baseline)
+        legacy["status"] = status
+        legacy["credentials"] = copy.deepcopy(credentials)
+        legacy["candidates"][0]["portrait"] = portrait
+        if status == "open":
+            legacy["closedAt"] = ""
+        data, original = save_fixture(status, legacy)
+        urn = Urn(exe, web, data)
+        try:
+            urn.start()
+            public = urn.request("/api/state")[1]
+            require(public["status"] == status and public["total"] == 4,
+                    f"Legacy {status} election lost its status or votes")
+            require(not public["candidates"][0].get("portrait"), "Legacy public state exposed an individual portrait")
+            urn.access()
+            admin = urn.state()
+            require(not admin["candidates"][0].get("portrait") and "credentials" not in admin,
+                    "Legacy session state exposed a portrait or old credentials")
+            if status == "closed":
+                check_counts(urn.call("export", admin=True), EXPECTED, 4)
+            require((data / "urna.json").read_bytes() == original,
+                    f"Reading legacy {status} data rewrote existing votes or credentials")
+        finally:
+            urn.stop()
+
+    setup = copy.deepcopy(baseline)
+    setup.update(status="setup", electionId="", openedAt="", closedAt="",
+                 counts={key: 0 for key in EXPECTED}, participants=[],
+                 school="Escola anterior de teste", electionTitle="Eleição anterior de teste",
+                 urnName="Urna anterior de teste")
+    setup["candidates"][0].update(name="Chapa anterior de teste", number="41",
+                                  proposals="Proposta antiga A.\nProposta antiga B.",
+                                  members="Integrante de teste A\nIntegrante de teste B", portrait=portrait)
+    for name, old_credentials in (("setup_without_credentials", None), ("setup_with_credentials", credentials)):
+        legacy = copy.deepcopy(setup)
+        legacy["credentials"] = copy.deepcopy(old_credentials)
+        data, _ = save_fixture(name, legacy)
+        urn = Urn(exe, web, data)
+        try:
+            urn.start()
+            public = urn.request("/api/state")[1]
+            migrated = json.loads((data / "urna.json").read_text(encoding="utf-8-sig"))
+            require(public["status"] == "open" and public["total"] == 0 and migrated["electionId"] and migrated["openedAt"],
+                    "A complete legacy setup did not open immediately")
+            for key in ("urnId", "urnName", "school", "electionTitle", "createdAt", "candidates", "credentials", "counts", "participants"):
+                require(migrated.get(key) == legacy.get(key), f"Legacy setup migration changed {key}")
+            urn.access()
+            migrated_bytes = (data / "urna.json").read_bytes()
+            urn.stop()
+            urn.start()
+            require((data / "urna.json").read_bytes() == migrated_bytes, "A second startup rewrote an already migrated setup")
+        finally:
+            urn.stop()
+
+    incomplete = copy.deepcopy(setup)
+    incomplete["credentials"] = None
+    incomplete["candidates"][0]["number"] = ""
+    setup_with_votes = copy.deepcopy(baseline)
+    setup_with_votes.update(status="setup", electionId="", openedAt="", closedAt="")
+    for name, legacy in (("incomplete_setup", incomplete), ("setup_with_votes", setup_with_votes)):
+        data, original = save_fixture(name, legacy)
+        expect_start_failure(Urn(exe, web, data), f"Invalid legacy fixture {name} was silently opened")
+        require((data / "urna.json").read_bytes() == original, f"Invalid legacy fixture {name} was overwritten")
 
 
 def expect_start_failure(urn, message):
@@ -276,9 +319,10 @@ def standalone_smoke(exe: Path, web: Path):
         try:
             urn.start()
             public = urn.request("/api/state")[1]
-            require(public["status"] == "setup" and not public["configured"] and public["total"] == 0,
-                    "Standalone EXE did not begin with a clean unconfigured election")
+            require(public["status"] == "open" and public["total"] == 0 and public["electionId"],
+                    "Standalone EXE was not immediately ready to vote")
             check_group_defaults(public, web)
+            check_no_credentials(urn.data)
             index = urn.request("/")[1]
             expected_index = (web / "index.html").read_text(encoding="utf-8-sig").replace("__CSRF_TOKEN__", urn.csrf)
             require(index.replace("\r\n", "\n") == expected_index.replace("\r\n", "\n"),
@@ -296,8 +340,6 @@ def standalone_smoke(exe: Path, web: Path):
             rejected(urn.request("/assets/missing.png"), "Missing embedded resource did not return a client error")
             require((portable / "Dados" / "urna.json").is_file(),
                     "Default data was not created beside the standalone EXE")
-            urn.setup("Urna portátil de teste", candidates=public["candidates"])
-            urn.call("open", {}, admin=True)
             urn.vote("Aluno Teste Portátil", "c1", "9º T")
             state_path = portable / "Dados" / "urna.json"
             committed_bytes = state_path.read_bytes()
@@ -309,7 +351,7 @@ def standalone_smoke(exe: Path, web: Path):
             check_group_defaults(reopened, web)
             require(state_path.read_bytes() == committed_bytes,
                     "Standalone restart rewrote or reset the existing data file")
-            urn.admin = urn.call("login", {"pin": PIN})["adminToken"]
+            urn.access()
             urn.call("close", {}, admin=True)
             check_counts(urn.call("export", admin=True), {"c1": 1, "c2": 0, "c3": 0, "blank": 0, "nullVote": 0}, 1)
             require({p.name for p in portable.iterdir()} == {copied_exe.name, "Dados"},
@@ -359,28 +401,31 @@ def run(exe: Path, web: Path):
             require(first.csrf in index, "Index and API do not agree on session token")
             public = first.request("/api/state")[1]
             require("counts" not in public and "participants" not in public, "Public state leaks election data")
+            require(public["status"] == "open" and public["configured"] and public["total"] == 0 and public["electionId"],
+                    "A fresh election requires preparation before receiving votes")
             check_group_defaults(public, web)
+            check_no_credentials(first.data)
+            candidates = public["candidates"]
             print("PASS group-only defaults, all three original group photos and supplied candidate metadata")
-            rejected(first.request(ROUTES["setup"], {"pin": PIN}, csrf=False), "Missing CSRF accepted")
-            first.setup()
-            configured = first.request("/api/state")[1]
-            require(configured["candidates"][1].get("proposals") == CANDIDATES[1]["proposals"],
-                    "Candidate proposal text or line breaks were not preserved by setup")
-            rejected(first.request(ROUTES["setup"], {"pin": PIN, "school": "Overwrite"}),
-                     "Already configured urn accepted setup again")
-            rejected(first.request(ROUTES["open"], {}), "Missing administrator authorization accepted")
-            rejected(first.request(ROUTES["login"], {"pin": "000000"}), "Wrong administrator PIN accepted")
-            first.admin = first.call("login", {"pin": PIN}).get("adminToken")
-            require(first.admin, "PIN login gave no session")
-            first.call("open", {}, admin=True)
+            rejected(first.request(ROUTES["access"], {}, csrf=False), "Session access without CSRF was accepted")
+            rejected(first.request(ROUTES["close"], {}), "Closing without a local access session was accepted")
+            first.access()
+            before_deprecated_requests = (first.data / "urna.json").read_bytes()
+            for endpoint in ("setup", "login", "config", "open"):
+                rejected(first.request("/api/admin/" + endpoint, {}, admin=True),
+                         f"Removed preparation endpoint {endpoint} was accepted")
+            require((first.data / "urna.json").read_bytes() == before_deprecated_requests,
+                    "A removed preparation endpoint changed the election data")
             rejected(first.request(ROUTES["export"], admin=True), "Unclosed urn exported")
-            print("PASS setup, request protection, administrator login and opening")
+            print("PASS immediate voting, no password credentials, CSRF session access and disabled preparation endpoints")
 
             expect_start_failure(first, "Second process used the same data folder")
             require(first.proc.poll() is None, "Lock attempt stopped the original process")
             print("PASS exclusive data-folder lock")
 
             token = first.identify("  Ána   Silva  ")
+            rejected(first.request(ROUTES["vote"], {"voterToken": token, "choice": "c1"}, csrf=False),
+                     "Vote confirmation without CSRF was accepted")
             with ThreadPoolExecutor(max_workers=2) as pool:
                 submissions = [pool.submit(first.request, ROUTES["vote"],
                                            {"voterToken": token, "choice": "c1"}) for _ in range(2)]
@@ -405,7 +450,7 @@ def run(exe: Path, web: Path):
 
             first.stop()
             first.start()
-            first.admin = first.call("login", {"pin": PIN})["adminToken"]
+            first.access()
             reopened = first.state()
             require(reopened["total"] == 4 and reopened["status"] == "open",
                     "Ongoing election did not persist its turnout and open status")
@@ -413,6 +458,8 @@ def run(exe: Path, web: Path):
                     "Restart exposed the running tallies or individual presence list")
             pending_token = first.identify("Elisa Costa")
             first.call("close", {}, admin=True)
+            rejected(first.request(ROUTES["close"], {}, admin=True), "A closed election was finalized again")
+            rejected(first.request("/api/admin/open", {}, admin=True), "A closed election was reopened")
             rejected(first.request(ROUTES["identify"], {"name": "Outro aluno", "grade": "9º A"}),
                      "Closed urn identified another voter")
             rejected(first.request(ROUTES["vote"], {"voterToken": pending_token, "choice": "c3"}),
@@ -424,10 +471,10 @@ def run(exe: Path, web: Path):
                     "Ballot export retains photographs or unexpected candidate fields")
             require(batch1["status"] == "closed", "Export status is not closed")
             csv_text = first.call("report", admin=True)
-            require(isinstance(csv_text, str) and all(candidate["number"] in csv_text for candidate in CANDIDATES),
+            require(isinstance(csv_text, str) and all(candidate["number"] in csv_text for candidate in candidates),
                     "CSV report is missing candidate numbers")
             csv_rows = list(csv.reader(io.StringIO(csv_text), delimiter=";"))
-            for candidate in CANDIDATES:
+            for candidate in candidates:
                 row = next((row for row in csv_rows if row and row[0] == candidate["name"]), None)
                 require(row is not None and row[-1] == str(EXPECTED[candidate["id"]]),
                         f"CSV report has wrong count for {candidate['name']}: {row!r}")
@@ -441,16 +488,16 @@ def run(exe: Path, web: Path):
                     "CSV report is missing the total of four ballots")
             first.stop()
             first.start()
-            first.admin = first.call("login", {"pin": PIN})["adminToken"]
+            first.access()
             check_counts(first.state(), EXPECTED, 4)
+            require(first.state()["status"] == "closed", "Restart reopened a finalized election")
             require(first.call("export", admin=True) == batch1, "Closed export changed after restart")
             print("PASS persisted ballot totals, closed-state persistence and CSV report")
 
             second = Urn(exe, web, root / "second").start()
             active.append(second)
-            second.setup("Notebook 2")
-            second.call("open", {}, admin=True)
             second.vote("Fabiana Ramos", "c3", "9º B")
+            second.access()
             second.call("close", {}, admin=True)
             batch2 = second.call("export", admin=True)
             require(batch1["urnId"] != batch2["urnId"], "Independent urns share the same identity")
@@ -478,8 +525,9 @@ def run(exe: Path, web: Path):
                      "Duplicate student between offline urns accepted")
             print("PASS exact consolidation and refusal of repeated urns, incompatible elections and duplicate students")
 
-            check_legacy_portraits(exe, web, root / "legacy")
-            print("PASS legacy portrait masking, import compatibility and existing file preservation")
+            baseline = json.loads((first.data / "urna.json").read_text(encoding="utf-8-sig"))
+            check_legacy_states(exe, web, root / "legacy", baseline)
+            print("PASS legacy open/closed preservation, setup migration without a password, incomplete setup refusal and portrait masking")
 
             first.stop()
             state_files = [p for p in first.data.glob("*.json") if p.is_file()]
@@ -497,31 +545,22 @@ def run(exe: Path, web: Path):
 
 
 def metadata_smoke(exe: Path, web: Path):
-    """Verify descriptive candidate fields without repeating the voting suite."""
-    candidates = copy.deepcopy(CANDIDATES)
-    candidates[1]["representativeName"] = "Nome de Teste — 1º ano D"
-    candidates[1]["members"] = "Pessoa Um — 7º A\nPessoa Dois — 8º B"
+    """Inspect the fixed candidate metadata and preserve it across a restart."""
     with tempfile.TemporaryDirectory(prefix="urna-metadata-") as tmp:
         urn = Urn(exe, web, Path(tmp))
         try:
             urn.start()
-            urn.setup(candidates=candidates)
-            for field in ("proposals", "members", "representativeName"):
-                require(urn.request("/api/state")[1]["candidates"][1].get(field) == candidates[1][field],
-                        f"Candidate metadata {field} did not roundtrip exactly")
+            before = urn.request("/api/state")[1]
+            check_group_defaults(before, web)
+            check_no_credentials(urn.data)
+            original = (urn.data / "urna.json").read_bytes()
             urn.stop()
             urn.start()
-            for field in ("proposals", "members", "representativeName"):
-                require(urn.request("/api/state")[1]["candidates"][1].get(field) == candidates[1][field],
-                        f"Candidate metadata {field} did not persist after restart")
-            urn.admin = urn.call("login", {"pin": PIN})["adminToken"]
-            urn.call("config", {"school": "Escola de Testes", "electionTitle": "Grêmio 2026",
-                                "urnName": "Notebook 1", "candidates": copy.deepcopy(CANDIDATES)}, admin=True)
-            old_format_candidate = urn.request("/api/state")[1]["candidates"][1]
-            require(old_format_candidate.get("members", "") == "" and
-                    old_format_candidate.get("representativeName", "") == "",
-                    "An older configuration without optional metadata kept stale values")
-            print("METADATA SMOKE PASSED: exact multiline roundtrip, restart persistence and old-config compatibility")
+            after = urn.request("/api/state")[1]
+            require(after["status"] == "open" and after["candidates"] == before["candidates"],
+                    "Restart changed the fixed candidate metadata or required preparation")
+            require((urn.data / "urna.json").read_bytes() == original, "Metadata inspection rewrote the saved election")
+            print("METADATA SMOKE PASSED: fixed group-only metadata, immediate voting and unchanged persistence")
         finally:
             urn.stop()
 

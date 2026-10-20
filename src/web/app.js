@@ -17,8 +17,7 @@ const icons = {
   shield:'<path d="m12 2 8 3v6c0 5-8 11-8 11S4 16 4 11V5z"/><path d="m8 11 3 3 5-6"/>'
 };
 const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.info}</svg>`;
-const state = {data:null,admin:null,adminData:null,adminTab:'config',csrf:$('meta[name=urna-token]').content,route:'home',voter:null,digits:'',blank:false,saving:false,photos:{},uploading:0,configDirty:false,batches:[],merged:null,toastTimer:null,finishTimer:null};
-function configuredPhoto(c,kind){const key=c.id+'_'+kind;return Object.prototype.hasOwnProperty.call(state.photos,key)?state.photos[key]:(c[kind]||'');}
+const state = {data:null,admin:null,adminData:null,adminTab:'results',csrf:$('meta[name=urna-token]').content,route:'home',voter:null,digits:'',blank:false,saving:false,batches:[],merged:null,toastTimer:null,finishTimer:null};
 const defaults = [
   {id:'c1',name:'Chapa Conexão',number:'01',groupPhoto:''},
   {id:'c2',name:'Liderança Jovem',number:'07',groupPhoto:''},
@@ -57,8 +56,8 @@ function home() {
     <aside class="intro-card">${icon('urn').replace('<svg','<svg class="stamp"')}<h3>Participar é simples.</h3><ol class="steps"><li><span class="step-num">01</span> Informe seu nome completo e sua turma.</li><li><span class="step-num">02</span> Digite o número da chapa na urna.</li><li><span class="step-num">03</span> Confira as fotos e confirme seu voto.</li></ol></aside></section>
     <div class="section-line"><h2>As chapas desta eleição</h2><span>Grêmio estudantil · 2026</span></div>
     <section class="candidates" aria-label="Chapas candidatas">${candidates.map((c,i)=>`<article class="candidate-card"><button class="group-photo photo-button" type="button" data-action="enlarge-photo" data-value="${esc(c.id)}" aria-label="Ampliar foto da ${esc(c.name)}">${photo(c)}<span class="photo-zoom-label">${icon('expand')} Ampliar foto</span></button><div class="candidate-meta"><div><small>Chapa ${esc(c.number||'—')}</small><h3>${esc(c.name||'Nome a definir')}</h3><button class="candidate-link" data-action="candidate-details" data-value="${esc(c.id)}" aria-label="Conhecer ${esc(c.name)}">Conhecer a chapa ${icon('arrow')}</button></div><span class="number-badge" aria-label="Número ${esc(c.number)}">${esc(c.number||'—')}</span></div></article>`).join('')}</section>
-    <section class="start-panel"><div><h2>${closed?'A votação foi encerrada.':open?'Tudo pronto para o seu voto?':'Uma escola melhor começa com você.'}</h2><p>${closed?'A comissão já pode exportar a apuração desta urna.':open?'Tenha seu nome completo e sua série/turma em mãos.':'A comissão está preparando a urna. Aguarde a abertura da votação.'}</p></div><button class="btn lime" data-action="identify" ${open?'':'disabled'}>${icon('user')} Identificar e votar ${icon('arrow')}</button></section>
-    <footer class="footer"><span class="footer-info">${icon('shield')} Voto sigiloso · identificação separada da apuração</span><div class="footer-actions"><span>${esc(d.urnName||'Urna 01')}</span><button class="text-btn" data-action="admin">${icon('lock')} Comissão</button><button class="text-btn" data-action="finish">Finalizar votação ${icon('arrow')}</button></div></footer>
+    <section class="start-panel"><div><h2>${closed?'A votação foi encerrada.':'Tudo pronto para o seu voto?'}</h2><p>${closed?'Os resultados desta urna estão disponíveis para exportação.':'Tenha seu nome completo e sua série/turma em mãos.'}</p></div><button class="btn lime" data-action="identify" ${open?'':'disabled'}>${icon('user')} Identificar e votar ${icon('arrow')}</button></section>
+    <footer class="footer"><span class="footer-info">${icon('shield')} Voto sigiloso · identificação separada da apuração</span><div class="footer-actions"><span>${esc(d.urnName||'Urna')}</span><button class="text-btn" data-action="finish">${closed?'Ver resultados':'Finalizar votação'} ${icon('arrow')}</button></div></footer>
   </main>`;
   window.scrollTo(0,0);
 }
@@ -77,7 +76,7 @@ function enlargePhoto(id){
   const c=state.data.candidates.find(candidate=>candidate.id===id);if(!c)return;
   dialog(esc(c.name),`Chapa ${esc(c.number)} · Foto do grupo`, `<div class="dialog-body photo-viewer">${photo(c)}<div class="form-actions"><button class="btn primary" data-action="candidate-details" data-value="${esc(c.id)}">Voltar à chapa ${icon('back')}</button></div></div>`,true);
 }
-function dismiss() { $('#modal-root').innerHTML='';if(state.admin){state.admin=null;state.adminData=null;state.photos={};} }
+function dismiss() { $('#modal-root').innerHTML='';state.admin=null;state.adminData=null; }
 function identify() {
   if(state.data.status!=='open')return;
   dialog('Antes de votar, identifique-se.','Preencha os dados como estão na lista da sua turma.',`<form class="dialog-body" data-form="identify"><label class="field">Nome completo<input name="name" autocomplete="off" maxlength="120" required placeholder="Digite seu nome completo"></label><label class="field">Série e turma<input name="grade" autocomplete="off" maxlength="60" required placeholder="Ex.: 8º ano A"></label><div class="notice">Seu nome registra a sua participação. O sistema guarda apenas a soma dos votos, sem associar sua escolha à sua identificação.</div><button class="btn primary block" type="submit">Ir para a urna ${icon('arrow')}</button></form>`);
@@ -120,36 +119,19 @@ async function confirmVote() {
   finally{state.saving=false;if(state.route==='ballot')screen();}
 }
 async function goHome(){clearTimeout(state.finishTimer);try{await refresh();}catch(err){toast(err.message,true);}home();}
-function pinLogin(next='config') {
-  if(!state.data.configured) {state.adminData=state.data;state.adminTab='config';renderAdmin(true);return;}
-  if(state.admin){openAdmin(next);return;}
-  dialog('Área da comissão','Use a senha definida para esta urna.',`<form class="dialog-body" data-form="login" data-next="${esc(next)}"><label class="field">Senha da comissão<input name="pin" type="password" inputmode="numeric" pattern="[0-9]{6,}" autocomplete="off" required placeholder="Senha numérica de 6 ou mais dígitos"></label><div class="notice">Somente a comissão deve configurar, finalizar a votação e exportar os arquivos desta urna.</div><button class="btn primary block" type="submit">Entrar ${icon('arrow')}</button></form>`);
+async function accessResults(next='results') {
+  const access=await api('admin/access',{});state.admin=access.adminToken;
+  await openAdmin(next);
 }
-async function openAdmin(tab='config') {
+async function openAdmin(tab='results') {
   state.adminData=await api('admin/state',undefined,true);state.adminTab=tab==='close'?'results':tab;
-  state.photos={};renderAdmin(false);
+  renderAdmin();
   if(tab==='close' && state.adminData.status==='open')closePrompt();
 }
-function renderAdmin(initial=false) {
-  const d=state.adminData || state.data;
-  state.configDirty=false;
-  dialog(initial?'Preparar a urna':'Comissão eleitoral',`${esc(d.urnName||'Urna 01')} · ${d.status==='open'?'Votação em andamento':d.status==='closed'?'Votação encerrada':'Configuração inicial'}`,
-    `${initial?'':`<nav class="admin-tabs"><button class="tab ${state.adminTab==='config'?'active':''}" data-action="admin-tab" data-value="config">Configuração</button><button class="tab ${state.adminTab==='results'?'active':''}" data-action="admin-tab" data-value="results">Apuração</button><button class="tab ${state.adminTab==='merge'?'active':''}" data-action="admin-tab" data-value="merge">Somar urnas</button></nav>`}<div class="dialog-body" id="admin-content">${state.adminTab==='config'?configBody(d,initial):state.adminTab==='merge'?mergeBody():resultsBody(d)}</div>`,true);
-  if(state.adminTab==='config' && d.status==='setup') {
-    $('#admin-content').insertAdjacentHTML('afterbegin','<div class="switch-compact" style="margin-bottom:18px"><span class="small-text">Leve as mesmas fotos e chapas aos outros notebooks.</span><div class="form-actions" style="margin:0"><button class="text-btn" data-action="export-config">Exportar configuração '+icon('download')+'</button><label class="btn secondary" style="cursor:pointer">Importar configuração<input id="config-file" type="file" accept=".json" style="display:none"></label></div></div>');
-    document.querySelectorAll('input[name=pin]').forEach(input=>input.maxLength=20);
-    if(initial) $('input[name=pin]').closest('label').insertAdjacentHTML('afterend','<label class="field">Repita a senha da comissão<input name="pinConfirm" type="password" inputmode="numeric" minlength="6" maxlength="20" pattern="[0-9]{6,20}" autocomplete="new-password" required></label>');
-  }
-  if(state.adminTab==='config') {
-    d.candidates.forEach(c=>{
-      const card=$(`input[name="name_${c.id}"]`).closest('.config-card');
-      card.insertAdjacentHTML('beforeend',`<label class="field">Nome da representante<input name="representativeName_${c.id}" maxlength="120" ${d.status==='setup'?'':'readonly'} value="${esc(c.representativeName||'')}" placeholder="Nome e turma da representante"></label><label class="field">Propostas principais<textarea name="proposals_${c.id}" maxlength="4000" rows="5" ${d.status==='setup'?'':'readonly'} placeholder="Uma proposta por linha">${esc(c.proposals||'')}</textarea></label><label class="field">Integrantes e turmas<textarea name="members_${c.id}" maxlength="4000" rows="5" ${d.status==='setup'?'':'readonly'} placeholder="Nome e turma, um integrante por linha">${esc(c.members||'')}</textarea></label>`);
-    });
-  }
-}
-function configBody(d,initial) {
-  const locked=d.status!=='setup',candidates=d.candidates||defaults;
-  return `<form data-form="config" data-initial="${initial?'yes':'no'}"><div class="notice ${locked?'warning':''}">${locked?'A configuração está bloqueada porque esta urna já foi aberta.':`Confira os dados e adicione as fotos. Em cada notebook, use um nome de urna diferente. ${initial?'Depois de salvar, abra a votação.':''}`}</div><div class="admin-grid"><label class="field">Escola<input name="school" maxlength="160" value="${esc(d.school||'Araci Zebral Teixeira')}" required ${locked?'readonly':''}></label><label class="field">Nome desta urna<input name="urnName" maxlength="60" value="${esc(d.urnName||'Urna 01')}" required ${locked?'readonly':''}><small>Ex.: Urna 01 · Biblioteca. Use um nome diferente em cada notebook.</small></label><label class="field">Título da eleição<input name="electionTitle" maxlength="160" value="${esc(d.electionTitle||'Eleição do Grêmio Estudantil 2026')}" required ${locked?'readonly':''}></label>${initial?'<label class="field">Crie a senha da comissão<input name="pin" type="password" inputmode="numeric" minlength="6" maxlength="64" pattern="[0-9]{6,}" autocomplete="new-password" required><small>Use 6 ou mais números. Guarde a senha com a comissão.</small></label>':''}</div><div class="admin-candidates">${candidates.map((c,i)=>`<section class="config-card"><h3>Chapa ${esc(c.number||'—')}</h3><label class="field">Nome da chapa<input name="name_${c.id}" maxlength="100" required value="${esc(c.name)}" ${locked?'readonly':''}></label><label class="field">Número · 2 dígitos<input name="number_${c.id}" inputmode="numeric" pattern="[0-9]{2}" minlength="2" maxlength="2" required value="${esc(c.number)}" ${locked?'readonly':''}></label>${['groupPhoto'].map(kind=>`<label class="field">Foto do grupo${locked?'':`<input type="file" accept="image/png,image/jpeg,image/webp" data-photo="${c.id}" data-kind="${kind}">`}<span id="preview_${c.id}_${kind}">${c[kind]?`<img src="${esc(c[kind])}" alt="Foto cadastrada">`:'<small>Foto ainda não cadastrada.</small>'}</span></label>`).join('')}</section>`).join('')}</div>${locked?'':`<div class="form-actions"><button class="btn primary" type="submit">${icon('check')} Salvar configuração</button>${initial?'':'<button class="btn secondary" type="button" data-action="open-prompt">Abrir votação '+icon('arrow')+'</button>'}</div>`}</form>`;
+function renderAdmin() {
+  const d=state.adminData;
+  dialog('Resultados da urna',`${esc(d.urnName)} · ${d.status==='open'?'Votação em andamento':'Votação encerrada'}`,
+    `<nav class="admin-tabs"><button class="tab ${state.adminTab==='results'?'active':''}" data-action="admin-tab" data-value="results">Apuração</button><button class="tab ${state.adminTab==='merge'?'active':''}" data-action="admin-tab" data-value="merge">Somar urnas</button></nav><div class="dialog-body" id="admin-content">${state.adminTab==='merge'?mergeBody():resultsBody(d)}</div>`,true);
 }
 function resultsTable(d) {
   const counts=d.counts||{},sum=total(counts);
@@ -159,20 +141,15 @@ function resultsTable(d) {
 }
 function resultsBody(d) {
   const t=total(d.counts),p=Array.isArray(d.participants)?d.participants.length:Number(d.total||0);
-  if(d.status==='setup')return `<div class="notice">Esta urna ainda está em preparação. Salve a configuração e abra a votação para receber os alunos.</div><button class="btn primary" data-action="admin-tab" data-value="config">Voltar à configuração</button>`;
   if(d.status==='open')return `<div class="metric-row"><div class="metric"><span>Participações nesta urna</span><strong>${p}</strong></div><div class="metric"><span>Situação</span><strong style="font-size:22px">Em votação</strong></div></div><div class="notice">O resultado por chapa aparece após o encerramento. Finalize somente quando todos os alunos destinados a esta urna tiverem votado.</div><button class="btn danger" data-action="close-prompt">${icon('lock')} Finalizar votação</button>`;
   return `<div class="closed-banner">Votação encerrada. Esta urna não recebe novos votos.</div><div class="metric-row"><div class="metric"><span>Votos registrados</span><strong>${t}</strong></div><div class="metric"><span>Alunos na lista de presença</span><strong>${p}</strong></div><div class="metric"><span>Conferência da apuração</span><strong style="font-size:22px">${p===t?'Tudo certo':'Divergência'}</strong></div></div>${resultsTable(d)}<div class="form-actions"><button class="btn primary" data-action="export-csv">${icon('download')} Baixar resultado (Excel)</button><button class="btn secondary" data-action="export-json">${icon('download')} Baixar arquivo da urna (JSON)</button><button class="btn secondary" data-action="print">${icon('print')} Imprimir / PDF</button></div><div class="form-actions"><button class="text-btn" data-action="export-participants">Baixar lista de presença ${icon('download')}</button></div><p class="small-text mt">Guarde o arquivo JSON de cada notebook para somar as urnas. O resultado e a lista de presença são arquivos separados; nenhum deles informa a escolha de um aluno.</p>`;
 }
 function mergeBody() {
-  return `<div class="notice">Selecione o arquivo JSON de <b>cada notebook</b> após finalizar todas as urnas. O sistema confere a eleição, os totais, as urnas repetidas e alunos que aparecem em mais de uma urna.</div><label class="file-drop">${icon('urn')}<br>Arquivos das urnas encerradas<input type="file" id="batch-files" accept=".json,application/json" multiple></label><div id="batch-list" class="import-list">${state.batches.map(b=>esc(b.urnName||'Arquivo de urna')).join('<br>')}</div><div class="form-actions"><button class="btn primary" data-action="merge" ${state.batches.length?'':'disabled'}>Conferir e somar urnas ${icon('arrow')}</button></div><div id="merged-result">${state.merged?mergedResult():''}</div><p class="small-text mt">Sem internet, o controle entre notebooks depende da comissão. Divida as turmas entre urnas para que cada aluno vote em apenas um notebook. Se houver duplicidade, o sistema aponta a ocorrência; a comissão precisa resolver a situação antes de concluir a apuração.</p>`;
+  return `<div class="notice">Selecione o arquivo JSON de <b>cada notebook</b> após finalizar todas as urnas. O sistema confere a eleição, os totais, as urnas repetidas e alunos que aparecem em mais de uma urna.</div><label class="file-drop">${icon('urn')}<br>Arquivos das urnas encerradas<input type="file" id="batch-files" accept=".json,application/json" multiple></label><div id="batch-list" class="import-list">${state.batches.map(b=>esc(b.urnName||'Arquivo de urna')).join('<br>')}</div><div class="form-actions"><button class="btn primary" data-action="merge" ${state.batches.length?'':'disabled'}>Conferir e somar urnas ${icon('arrow')}</button></div><div id="merged-result">${state.merged?mergedResult():''}</div><p class="small-text mt">Sem internet, o controle entre notebooks depende dos responsáveis pela votação. Divida as turmas entre urnas para que cada aluno vote em apenas um notebook. Se houver duplicidade, o sistema aponta a ocorrência; os responsáveis precisam resolver a situação antes de concluir a apuração.</p>`;
 }
 function mergedResult(){const d=state.merged;return `<h3 class="report-title mt">Apuração geral</h3><div class="notice">${(d.urns||[]).length || state.batches.length} urnas conferidas · ${total(d.counts)} votos · sem alunos repetidos entre as urnas.</div>${resultsTable(d)}<div class="form-actions"><button class="btn primary" data-action="merged-csv">${icon('download')} Baixar resultado geral (Excel)</button><button class="btn secondary" data-action="merged-json">${icon('download')} Guardar apuração geral</button><button class="btn secondary" data-action="merged-print">${icon('print')} Imprimir / PDF</button></div>`;}
-function openPrompt() {
-  const d=state.adminData;
-  $('#admin-content').innerHTML=`<h3 class="report-title">Abrir esta urna para votação?</h3><div class="notice mt">Após abrir, nomes, números e fotos ficam bloqueados. Confira a configuração e o nome desta urna antes de continuar.</div><p class="small-text">${esc(d.school)}<br><b>${esc(d.urnName)}</b><br>${d.candidates.map(c=>`${esc(c.number)} · ${esc(c.name)}`).join('<br>')}</p>${d.candidates.some(c=>!c.groupPhoto)?'<div class="notice warning mt">Há fotos pendentes. Volte à configuração para incluir as imagens antes da abertura.</div>':''}<label class="check-line"><input id="open-confirm" type="checkbox"> Conferi os dados, preparei a lista de alunos desta urna e estou pronto para iniciar.</label><div class="form-actions"><button class="btn secondary" data-action="admin-tab" data-value="config">Voltar à configuração</button><button class="btn primary" data-action="open-election">Abrir votação</button></div>`;
-}
 function closePrompt() {
-  $('#admin-content').innerHTML=`<h3 class="report-title">Finalizar votação desta urna?</h3><div class="notice warning mt">O encerramento é definitivo. Esta urna deixará de receber votos e a apuração ficará disponível para exportação.</div><label class="check-line"><input id="close-confirm" type="checkbox"> A comissão confirma que todos os alunos previstos para esta urna já tiveram oportunidade de votar.</label><div class="form-actions"><button class="btn secondary" data-action="admin-tab" data-value="results">Continuar votação</button><button class="btn danger" data-action="close-election">Finalizar e ver resultado</button></div>`;
+  $('#admin-content').innerHTML=`<h3 class="report-title">Finalizar votação desta urna?</h3><div class="notice warning mt">O encerramento é definitivo. Esta urna deixará de receber votos e a apuração ficará disponível para exportação.</div><label class="check-line"><input id="close-confirm" type="checkbox"> Confirmo que todos os alunos previstos para esta urna já tiveram oportunidade de votar.</label><div class="form-actions"><button class="btn secondary" data-action="dismiss">Continuar votação</button><button class="btn danger" data-action="close-election">Finalizar e ver resultado</button></div>`;
 }
 function safeName(name){return String(name||'urna').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'-').slice(0,80);}
 function download(data,filename,type) {
@@ -193,36 +170,17 @@ function mergedCsv(d) {
 }
 function printReport(d,merged=false) {
   // The same original institutional images are also printed on the ballot report.
-  $('#print-root').innerHTML=`<h1>${merged?'Apuração geral':'Boletim de urna'}<br>Grêmio estudantil</h1><p><b>${esc(d.school||state.data.school)}</b><br>${esc(d.electionTitle||state.data.electionTitle)}<br>${merged?`${state.batches.length} urnas consolidadas`:esc(d.urnName)}<br>Emitido em ${esc(new Date().toLocaleString('pt-BR'))}</p>${resultsTable(d)}<p>Presenças conferidas: ${(d.participants||[]).length}. Total de votos: ${total(d.counts)}.<br>Votos nominais + brancos + nulos = total de votos registrados.</p>${merged?`<p>Urnas: ${state.batches.map(b=>esc(b.urnName)).join(', ')}.</p>`:`<p>Identificador da urna: ${esc(d.urnId||'')}</p>`}<p>A identificação dos alunos é registrada separadamente da apuração. Este boletim não revela a escolha de nenhum estudante.</p><div class="print-signatures"><div>Comissão eleitoral</div><div>Responsável pela conferência</div></div>`;
+  $('#print-root').innerHTML=`<h1>${merged?'Apuração geral':'Boletim de urna'}<br>Grêmio estudantil</h1><p><b>${esc(d.school||state.data.school)}</b><br>${esc(d.electionTitle||state.data.electionTitle)}<br>${merged?`${state.batches.length} urnas consolidadas`:esc(d.urnName)}<br>Emitido em ${esc(new Date().toLocaleString('pt-BR'))}</p>${resultsTable(d)}<p>Presenças conferidas: ${(d.participants||[]).length}. Total de votos: ${total(d.counts)}.<br>Votos nominais + brancos + nulos = total de votos registrados.</p>${merged?`<p>Urnas: ${state.batches.map(b=>esc(b.urnName)).join(', ')}.</p>`:`<p>Identificador da urna: ${esc(d.urnId||'')}</p>`}<p>A identificação dos alunos é registrada separadamente da apuração. Este boletim não revela a escolha de nenhum estudante.</p><div class="print-signatures"><div>Responsável pela urna</div><div>Responsável pela conferência</div></div>`;
   $('#print-root').insertAdjacentHTML('afterbegin',institutionalLogos());
   window.print();
 }
-async function uploadPhoto(input) {
-  const f=input.files[0];if(!f)return;
-  if(!['image/jpeg','image/png','image/webp'].includes(f.type)||f.size>12*1024*1024){input.value='';throw new Error('Escolha uma foto JPG, PNG ou WebP de até 12 MB.');}
-  const src=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(new Error('Não foi possível ler a foto.'));r.readAsDataURL(f);});
-  const image=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('A foto não pôde ser aberta.'));i.src=src;});
-  const scale=Math.min(1,1100/image.width,900/image.height),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
-  const data=canvas.toDataURL('image/jpeg',.86),id=input.dataset.photo,kind=input.dataset.kind;
-  state.photos[id+'_'+kind]=data;$('#preview_'+id+'_'+kind).innerHTML=`<img src="${data}" alt="Foto selecionada">`;
-}
 async function handleForm(form) {
+  if(form.dataset.form!=='identify')return;
   const submit=form.querySelector('[type=submit]');if(submit.disabled)return;submit.disabled=true;
   const values=new FormData(form);
   try {
-    if(form.dataset.form==='identify') {
-      const r=await api('identify',{name:values.get('name').trim(),grade:values.get('grade').trim()});state.voter=r.voterToken;$('#modal-root').innerHTML='';ballot();
-    }else if(form.dataset.form==='login'){
-      const r=await api('admin/login',{pin:values.get('pin')});state.admin=r.adminToken;await openAdmin(form.dataset.next);
-    }else if(form.dataset.form==='config'){
-      if(state.uploading)throw new Error('Aguarde o processamento das fotos antes de salvar.');
-      const initial=form.dataset.initial==='yes';
-      const config={school:values.get('school').trim(),urnName:values.get('urnName').trim(),electionTitle:values.get('electionTitle').trim(),candidates:(state.adminData.candidates||defaults).map(c=>({id:c.id,name:values.get('name_'+c.id).trim(),number:values.get('number_'+c.id),groupPhoto:configuredPhoto(c,'groupPhoto'),proposals:String(values.get('proposals_'+c.id)||'').trim(),members:String(values.get('members_'+c.id)||'').trim(),representativeName:String(values.get('representativeName_'+c.id)||'').trim()}))};
-      if(new Set(config.candidates.map(c=>c.number)).size!==3)throw new Error('Cada chapa precisa de um número diferente.');
-      if(initial) {if(values.get('pin')!==values.get('pinConfirm'))throw new Error('As duas senhas precisam ser iguais. Confira e tente novamente.');config.pin=values.get('pin');const r=await api('admin/setup',config);state.admin=r.adminToken;}
-      else await api('admin/config',config,true);
-      await refresh();home();await openAdmin('config');toast('Configuração salva. Confira os dados e abra a votação quando estiver pronto.');
-    }
+    const r=await api('identify',{name:values.get('name').trim(),grade:values.get('grade').trim()});
+    state.voter=r.voterToken;$('#modal-root').innerHTML='';ballot();
   }catch(err){toast(err.message,true);}
   finally{submit.disabled=false;}
 }
@@ -233,27 +191,16 @@ async function action(name,button) {
   if(name==='candidate-details'){candidateDetails(button.dataset.value);return;}
   if(name==='enlarge-photo'){enlargePhoto(button.dataset.value);return;}
   if(name==='home'){await goHome();return;}
-  if(name==='admin'||name==='finish'){pinLogin(name==='finish'?'close':'config');return;}
+  if(name==='finish'){await accessResults('close');return;}
   if(name==='digit'){if(!state.saving&&!state.blank&&state.digits.length<2){state.digits+=button.dataset.value;screen();}return;}
   if(name==='blank'){if(!state.saving){state.blank=true;state.digits='';screen();}return;}
   if(name==='correct'){if(!state.saving){state.blank=false;state.digits='';screen();}return;}
   if(name==='confirm'){await confirmVote();return;}
   if(name==='cancel-vote'){if(!state.saving)await goHome();return;}
-  if(name==='admin-tab'){state.adminTab=button.dataset.value;state.adminData=await api('admin/state',undefined,true);state.photos={};renderAdmin(false);return;}
-  if(name==='export-config'){
-    if(state.uploading)throw new Error('Aguarde o processamento das fotos antes de exportar.');
-    const form=$('[data-form=config]'),values=new FormData(form),d=state.adminData;
-    const config={format:'urna-estudantil-config-v1',school:values.get('school').trim(),electionTitle:values.get('electionTitle').trim(),candidates:d.candidates.map(c=>({id:c.id,name:values.get('name_'+c.id).trim(),number:values.get('number_'+c.id),groupPhoto:configuredPhoto(c,'groupPhoto'),proposals:String(values.get('proposals_'+c.id)||'').trim(),members:String(values.get('members_'+c.id)||'').trim(),representativeName:String(values.get('representativeName_'+c.id)||'').trim()}))};
-    download(JSON.stringify(config,null,2),'configuracao-chapas.json','application/json;charset=utf-8');toast('Configuração exportada com as fotos. Cada notebook manterá seu nome de urna e sua própria senha.');return;
-  }
-  if(name==='open-prompt'){if(state.uploading)throw new Error('Aguarde o processamento das fotos.');if(state.configDirty)throw new Error('Salve as alterações da configuração antes de abrir a votação.');openPrompt();return;}
-  if(name==='open-election'){
-    if(!$('#open-confirm')?.checked)throw new Error('Marque a confirmação da comissão para abrir a votação.');
-    button.disabled=true;try{await api('admin/open',{},true);await refresh();home();dismiss();toast('Votação aberta. A urna está pronta para os alunos.');}finally{button.disabled=false;}return;
-  }
+  if(name==='admin-tab'){state.adminTab=button.dataset.value;state.adminData=await api('admin/state',undefined,true);renderAdmin();return;}
   if(name==='close-prompt'){closePrompt();return;}
   if(name==='close-election'){
-    if(!$('#close-confirm')?.checked)throw new Error('Marque a confirmação da comissão para finalizar a votação.');
+    if(!$('#close-confirm')?.checked)throw new Error('Marque a confirmação para finalizar a votação.');
     button.disabled=true;try{await api('admin/close',{},true);await refresh();home();await openAdmin('results');toast('Votação encerrada. O resultado será baixado. Guarde também o arquivo JSON.');try{await serverDownload('report',safeName(state.adminData.urnName)+'-resultado.csv');}catch(err){toast('Urna encerrada e votos preservados. Use Baixar resultado para tentar o download novamente.',true);}}finally{button.disabled=false;}return;
   }
   const fileBase=safeName((state.adminData||{}).urnName);
@@ -272,20 +219,8 @@ async function action(name,button) {
 }
 document.addEventListener('click',event=>{const button=event.target.closest('[data-action]');if(!button||button.disabled)return;event.preventDefault();Promise.resolve(action(button.dataset.action,button)).catch(err=>toast(err.message,true));});
 document.addEventListener('submit',event=>{if(event.target.matches('[data-form]')){event.preventDefault();handleForm(event.target);}});
-document.addEventListener('input',event=>{if(event.target.closest('[data-form=config]'))state.configDirty=true;});
 document.addEventListener('change',async event=>{
   try{
-    if(event.target.matches('[data-photo]')){state.uploading++;state.configDirty=true;try{await uploadPhoto(event.target);}finally{state.uploading--;}}
-    if(event.target.id==='config-file'){
-      const file=event.target.files[0];if(!file)return;if(file.size>8*1024*1024)throw new Error('O arquivo de configuração deve ter até 8 MB.');
-      let c;try{c=JSON.parse(await file.text());}catch(_){throw new Error('Este arquivo de configuração não é um JSON válido.');}
-      if(c.format!=='urna-estudantil-config-v1'||!Array.isArray(c.candidates)||c.candidates.length!==3||typeof c.school!=='string'||typeof c.electionTitle!=='string')throw new Error('Selecione o arquivo configuracao-chapas.json exportado pela urna.');
-      const keys=new Set();c.candidates.forEach((x,i)=>{if(x.id!=='c'+(i+1)||typeof x.name!=='string'||!/^\d{2}$/.test(x.number)||keys.has(x.number))throw new Error('As chapas ou os números deste arquivo são inválidos.');keys.add(x.number);['groupPhoto'].forEach(k=>{if(x[k]&&!/^data:image\/(jpeg|png|webp);base64,/.test(x[k]))throw new Error('Foto inválida na configuração.');});});
-      const form=$('[data-form=config]');form.elements.namedItem('school').value=c.school;form.elements.namedItem('electionTitle').value=c.electionTitle;
-      c.candidates.forEach(x=>{form.elements.namedItem('name_'+x.id).value=x.name;form.elements.namedItem('number_'+x.id).value=x.number;form.elements.namedItem('proposals_'+x.id).value=typeof x.proposals==='string'?x.proposals:'';form.elements.namedItem('members_'+x.id).value=typeof x.members==='string'?x.members:'';form.elements.namedItem('representativeName_'+x.id).value=typeof x.representativeName==='string'?x.representativeName:'';['groupPhoto'].forEach(k=>{state.photos[x.id+'_'+k]=x[k]||'';$('#preview_'+x.id+'_'+k).innerHTML=x[k]?`<img src="${esc(x[k])}" alt="Foto importada">`:'<small>Foto ainda não cadastrada.</small>';});});
-      state.configDirty=true;
-      toast('Configuração importada. Defina o nome desta urna e salve antes de abrir a votação.');
-    }
     if(event.target.id==='batch-files'){
       const files=Array.from(event.target.files);state.batches=[];state.merged=null;$('#merged-result').innerHTML='';
       if(files.length>100)throw new Error('Selecione até 100 arquivos de urna por vez.');

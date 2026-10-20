@@ -2,19 +2,21 @@
 
 Aplicativo portátil para a eleição do grêmio da escola **Araci Zebral Teixeira**, em notebooks com **Windows 10 ou 11**. Funciona sem internet em um único executável C#/.NET Framework, com interface, fotos e logotipos incorporados. Ele abre a interface local no navegador. Cada notebook guarda uma urna independente; um pendrive permite distribuir o executável e reunir os resultados ao final.
 
-O aluno informa nome e série/turma, digita os dois dígitos da chapa e confirma a escolha. A interface destaca uma foto do grupo de cada chapa, com o nome da representante, propostas e integrantes. A comissão configura a eleição com PIN, encerra a votação e exporta CSV para Excel, JSON para consolidação e relatório para impressão/PDF. O sistema mantém contagens agregadas e uma lista de comparecimento separada, sem relatório de voto por aluno.
+O aluno informa nome e série/turma, digita os dois dígitos da chapa e confirma a escolha. A interface destaca uma foto do grupo de cada chapa, com o nome da representante, propostas e integrantes. Ao finalizar a votação, o programa disponibiliza CSV para Excel, JSON para consolidação e relatório para impressão/PDF. O sistema mantém contagens agregadas e uma lista de comparecimento separada, sem relatório de voto por aluno.
 
 ## Usar o aplicativo
 
 Baixe [UrnaEstudantil.exe](releases/UrnaEstudantil.exe). Em cada notebook, crie uma pasta própria no disco local, copie apenas esse executável e abra-o. As fotos e a interface já estão incluídas; basta executar o arquivo, sem instalação ou extração.
 
-Na primeira execução, o programa cria a pasta `Dados` ao lado do EXE. Ela guarda o estado dessa urna e deve permanecer ali. Para preparar outro notebook, copie somente o EXE original, sem levar `Dados` de uma urna já iniciada. Ao atualizar o aplicativo na mesma pasta, substitua apenas o EXE e preserve `Dados`.
+Na primeira execução, o programa cria a pasta `Dados` ao lado do EXE. Ela guarda o estado dessa urna e deve permanecer ali. Para outro notebook, copie somente o EXE original, sem levar `Dados` de uma urna já iniciada. Ao atualizar o aplicativo na mesma pasta, substitua apenas o EXE e preserve `Dados`.
 
-Configure uma urna e use a exportação/importação de configuração para compartilhar nomes, números, fotos e propostas com as demais. Cada urna mantém sua própria identificação, nome, PIN e votos.
+A primeira execução já abre a votação com as três chapas prontas. Cada notebook recebe automaticamente um nome no formato **Urna XXXXXXXX**, com oito caracteres de identificação. Atribua cada turma a um notebook e anote essa distribuição. Ao retomar uma pasta existente, os dados e o estado da urna são preservados; uma urna encerrada continua encerrada.
+
+Ao terminar, use **Finalizar votação**, marque a confirmação de encerramento definitivo e clique em **Finalizar e ver resultado**. O CSV para Excel é baixado automaticamente. Baixe também o JSON de cada notebook para **Somar urnas** nos resultados. Depois de encerrada, use **Ver resultados** para consultar e exportar a apuração.
 
 Na tela inicial e nos detalhes da chapa, **Ampliar foto** mostra a imagem inteira do grupo. Use **Voltar à chapa** para retornar.
 
-Consulte o [manual em HTML](docs/LEIA-ME.html) ou o [manual em PDF](docs/Manual-de-uso.pdf) para preparar, operar, finalizar e somar as urnas. O [ZIP completo](releases/Urna-Araci-Zebral.zip) é opcional e reúne materiais de apoio, documentação e fontes. Dados de votação não pertencem ao repositório.
+Consulte o [manual em HTML](docs/LEIA-ME.html) ou o [manual em PDF](docs/Manual-de-uso.pdf) para usar, finalizar e somar as urnas. O [ZIP completo](releases/Urna-Araci-Zebral.zip) é opcional e reúne materiais de apoio, documentação e fontes. Dados de votação não pertencem ao repositório.
 
 ## Chapas cadastradas
 
@@ -36,6 +38,6 @@ python tests/test_urna.py --exe dist/Urna-Araci-Zebral/UrnaEstudantil.exe --web-
 
 ## Dados e limites
 
-Este **repositório é privado** e inclui nomes e fotos fornecidos para as chapas. Restrinja seu acesso. Dados de votação, listas de presença reais, relatórios reais, PINs, credenciais e arquivos de autenticação ficam sempre fora do versionamento.
+Este **repositório é privado** e inclui nomes e fotos fornecidos para as chapas. Restrinja seu acesso. Dados de votação, listas de presença reais, relatórios reais, credenciais e arquivos de autenticação ficam sempre fora do versionamento.
 
-Uma urna offline não impede, em tempo real, que um aluno tente votar em outro notebook. A escola deve conferir a identidade e atribuir cada turma a uma única urna. A consolidação valida os totais e detecta conflitos entre urnas. O aplicativo escolar não tem certificação do TSE; comparar cópias dos dados produzidas durante a votação pode permitir inferir escolhas. Preserve os arquivos sob controle da comissão.
+Uma urna offline não impede, em tempo real, que um aluno tente votar em outro notebook. A escola deve conferir a identidade e atribuir cada turma a uma única urna. A consolidação valida os totais e detecta conflitos entre urnas. O aplicativo escolar não tem certificação do TSE; comparar cópias dos dados produzidas durante a votação pode permitir inferir escolhas. Preserve os arquivos sob controle da equipe da escola.

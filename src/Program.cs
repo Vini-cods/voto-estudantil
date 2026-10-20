@@ -24,8 +24,7 @@ internal static class Program
     private static readonly Dictionary<string, Voter> Voters = new Dictionary<string, Voter>();
     private static Dictionary<string, object> State;
     private static string DataDir, WebDir, StatePath, Csrf, BaseUrl;
-    private static int Port, BadLogins;
-    private static DateTime LoginBlockedUntil = DateTime.MinValue;
+    private static int Port;
     private static FileStream InstanceLock;
     private static TcpListener Listener;
 
@@ -59,6 +58,15 @@ internal static class Program
             {
                 try { State = ParseObject(File.ReadAllText(StatePath, Encoding.UTF8)); ValidateStored(State); }
                 catch (Exception e) { throw new Exception("O arquivo Dados/urna.json está inválido. Os dados foram preservados. Não apague a pasta; preserve os arquivos e procure a comissão. Detalhe: " + e.Message); }
+                if (S(State, "status") == "setup")
+                {
+                    try
+                    {
+                        ValidateCandidates(State, true);
+                        Dictionary<string, object> next = Clone(State); next["status"] = "open"; next["openedAt"] = Now(); next["electionId"] = ElectionId(next); Save(next);
+                    }
+                    catch (Exception e) { throw new Exception("Não foi possível abrir a configuração antiga desta urna. Os dados e as chapas existentes foram preservados; não apague a pasta Dados. Detalhe: " + e.Message); }
+                }
             }
             else
             {
@@ -99,7 +107,9 @@ internal static class Program
         renascer["representativeName"] = "Fernanda Santos de Souza — 1º ano D";
         renascer["members"] = "Fernanda Santos de Souza — 1º ano D\nCaylon — 2º ano D\nGuilherme Ferreira — 2º ano D\nGeovana Almeida — 2º ano B\nPyetro — 2º ano D\nPyetro Wilians — 1º ano A\nGustavo — 1º ano A\nKauany Sonya — 2º ano D";
         renascer["proposals"] = "Realização de dois interclasses.\nMúsica três vezes por semana.\nJogos.\nShow de talentos.\nFesta de Halloween.\nBaile de primavera.\nPasseio.\nSemana do adolescente.\nSala destaque.\nTrote em uma sexta-feira por mês.";
-        return D("stateFormat", "urna-estudantil-state-v1", "urnId", Guid.NewGuid().ToString("D"), "electionId", "", "urnName", "Urna 1", "school", "Araci Zebral Teixeira", "electionTitle", "Eleição do Grêmio Estudantil 2026", "status", "setup", "createdAt", Now(), "openedAt", "", "closedAt", "", "candidates", candidates, "counts", EmptyCounts(), "participants", new List<object>(), "credentials", null);
+        string urnId = Guid.NewGuid().ToString("D"), openedAt = Now();
+        Dictionary<string, object> state = D("stateFormat", "urna-estudantil-state-v1", "urnId", urnId, "electionId", "", "urnName", "Urna " + urnId.Substring(0, 8).ToUpperInvariant(), "school", "Araci Zebral Teixeira", "electionTitle", "Eleição do Grêmio Estudantil 2026", "status", "open", "createdAt", openedAt, "openedAt", openedAt, "closedAt", "", "candidates", candidates, "counts", EmptyCounts(), "participants", new List<object>());
+        ValidateCandidates(state, true); state["electionId"] = ElectionId(state); return state;
     }
     private static string SeedImage(string name)
     {
@@ -171,18 +181,6 @@ internal static class Program
         return b.ToString().ToUpperInvariant();
     }
     private static string RandomToken() { byte[] bytes = new byte[32]; using (RandomNumberGenerator rng = RandomNumberGenerator.Create()) rng.GetBytes(bytes); return Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_'); }
-    private static Dictionary<string, object> Credentials(string pin)
-    {
-        if (!Regex.IsMatch(pin, @"^[0-9]{6,20}$")) throw new ApiError(400, "Crie um PIN de 6 a 20 algarismos.");
-        byte[] salt = new byte[24]; using (RandomNumberGenerator rng = RandomNumberGenerator.Create()) rng.GetBytes(salt);
-        using (Rfc2898DeriveBytes pbkdf = new Rfc2898DeriveBytes(pin, salt, 150000)) return D("salt", Convert.ToBase64String(salt), "hash", Convert.ToBase64String(pbkdf.GetBytes(32)), "iterations", 150000);
-    }
-    private static bool PinMatches(string pin)
-    {
-        Dictionary<string, object> c = Obj(State["credentials"]); byte[] expected = Convert.FromBase64String(S(c, "hash")), actual;
-        using (Rfc2898DeriveBytes p = new Rfc2898DeriveBytes(pin, Convert.FromBase64String(S(c, "salt")), Integer(c["iterations"]))) actual = p.GetBytes(expected.Length);
-        int difference = expected.Length ^ actual.Length; for (int i = 0; i < expected.Length; i++) difference |= expected[i] ^ actual[i]; return difference == 0;
-    }
     private static void Save(Dictionary<string, object> next)
     {
         byte[] bytes = new UTF8Encoding(false).GetBytes(Serialize(next));
@@ -225,7 +223,7 @@ internal static class Program
         Guid parsed; if (!Guid.TryParse(S(s, "urnId"), out parsed)) throw new Exception("Identificação da urna inválida.");
         string status = S(s, "status"); if (status != "setup" && status != "open" && status != "closed") throw new Exception("Situação da urna inválida.");
         CheckParticipants(s); ValidateCandidates(s, status != "setup");
-        if (status != "setup" && (Get(s, "credentials") == null || S(s, "electionId") != ElectionId(s))) throw new Exception("Configuração ou identificação da eleição inválida.");
+        if (status != "setup" && S(s, "electionId") != ElectionId(s)) throw new Exception("Configuração ou identificação da eleição inválida.");
         if (status == "setup" && Total(s) != 0) throw new Exception("Uma urna em configuração não pode ter votos.");
         if (Get(s, "credentials") != null) { Dictionary<string, object> c = Obj(s["credentials"]); if (Convert.FromBase64String(S(c, "salt")).Length < 16 || Convert.FromBase64String(S(c, "hash")).Length != 32 || Integer(c["iterations"]) < 100000) throw new Exception("Credencial inválida."); }
     }
@@ -252,19 +250,6 @@ internal static class Program
         using (SHA256 hash = SHA256.Create()) { byte[] bytes = hash.ComputeHash(Encoding.UTF8.GetBytes(canonical.ToString())); StringBuilder b = new StringBuilder(); foreach (byte x in bytes) b.Append(x.ToString("x2")); return b.ToString(); }
     }
     private static void AppendCanonical(StringBuilder b, string s) { s = Clean(s, 200); b.Append(s.Length.ToString(CultureInfo.InvariantCulture)).Append(':').Append(s).Append('\n'); }
-    private static string ImageValue(Dictionary<string, object> c, string key)
-    {
-        string value = S(c, key); if (value.Length == 0) return "";
-        if (value.Length > 4 * 1024 * 1024 || !Regex.IsMatch(value, @"^data:image/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=\r\n]+$")) throw new ApiError(400, "Use uma imagem PNG, JPEG, WebP ou GIF com até 3 MB.");
-        int comma = value.IndexOf(','); try { Convert.FromBase64String(value.Substring(comma + 1)); } catch { throw new ApiError(400, "Imagem inválida."); } return value;
-    }
-    private static void Configure(Dictionary<string, object> next, Dictionary<string, object> input)
-    {
-        next["school"] = Clean(S(input, "school"), 160); next["electionTitle"] = Clean(S(input, "electionTitle"), 160); next["urnName"] = Clean(S(input, "urnName"), 80);
-        List<object> source = List(Get(input, "candidates")), candidates = new List<object>(); if (source.Count != 3) throw new ApiError(400, "Cadastre exatamente três candidatas.");
-        for (int i = 0; i < 3; i++) { Dictionary<string, object> c = Obj(source[i]); if (S(c, "id") != "c" + (i + 1)) throw new ApiError(400, "Ordem das candidatas inválida."); candidates.Add(D("id", "c" + (i + 1), "name", Clean(S(c, "name"), 120), "number", Clean(S(c, "number"), 2), "portrait", "", "groupPhoto", ImageValue(c, "groupPhoto"), "proposals", ProposalText(S(c, "proposals")), "members", ProposalText(S(c, "members")), "representativeName", Clean(S(c, "representativeName"), 120))); }
-        next["candidates"] = candidates; next["electionId"] = ""; ValidateCandidates(next, false);
-    }
     private static List<object> DisplayCandidates()
     {
         List<object> candidates = new List<object>();
@@ -273,11 +258,11 @@ internal static class Program
     }
     private static Dictionary<string, object> PublicState()
     {
-        return D("urnId", State["urnId"], "electionId", State["electionId"], "urnName", State["urnName"], "school", State["school"], "electionTitle", State["electionTitle"], "status", State["status"], "configured", State["credentials"] != null, "candidates", DisplayCandidates(), "total", List(State["participants"]).Count, "csrfToken", Csrf);
+        return D("urnId", State["urnId"], "electionId", State["electionId"], "urnName", State["urnName"], "school", State["school"], "electionTitle", State["electionTitle"], "status", State["status"], "configured", true, "candidates", DisplayCandidates(), "total", List(State["participants"]).Count, "csrfToken", Csrf);
     }
     private static Dictionary<string, object> AdminState()
     {
-        Dictionary<string, object> d = Clone(State); d.Remove("credentials"); d["candidates"] = DisplayCandidates(); d["configured"] = State["credentials"] != null; d["total"] = Total(State);
+        Dictionary<string, object> d = Clone(State); d.Remove("credentials"); d["candidates"] = DisplayCandidates(); d["configured"] = true; d["total"] = Total(State);
         // Live per-choice totals and names together permit differential vote inference.
         if (S(State, "status") == "open") { d.Remove("counts"); d.Remove("participants"); }
         return d;
@@ -286,10 +271,9 @@ internal static class Program
     private static void NeedAdmin(Request r)
     {
         string token; DateTime expiry;
-        if (!r.Headers.TryGetValue("X-Admin-Token", out token) || !AdminSessions.TryGetValue(token, out expiry) || expiry < DateTime.UtcNow) throw new ApiError(401, "Entre com o PIN da comissão para continuar.");
+        if (!r.Headers.TryGetValue("X-Admin-Token", out token) || !AdminSessions.TryGetValue(token, out expiry) || expiry < DateTime.UtcNow) throw new ApiError(401, "Reabra o painel de Resultados para continuar.");
         AdminSessions[token] = DateTime.UtcNow.AddHours(8);
     }
-    private static void NeedSetup() { if (S(State, "status") != "setup" || Total(State) != 0) throw new ApiError(409, "A configuração só pode ser alterada antes de abrir a votação."); }
     private static void NeedOpen() { if (S(State, "status") != "open") throw new ApiError(409, "A votação não está aberta."); }
     private static Dictionary<string, object> Batch(Dictionary<string, object> s)
     {
@@ -312,28 +296,12 @@ internal static class Program
                     string csrf; if (!r.Headers.TryGetValue("X-Urna-Token", out csrf) || csrf != Csrf) throw new ApiError(403, "Recarregue a página desta urna e tente novamente.");
                     body = r.Body.Length == 0 ? D() : ParseObject(new UTF8Encoding(false, true).GetString(r.Body));
                 }
-                if (r.Method == "POST" && r.Path == "/api/admin/setup")
-                {
-                    if (State["credentials"] != null) throw new ApiError(409, "O PIN desta urna já foi definido.");
-                    NeedSetup(); Dictionary<string, object> next = Clone(State); Configure(next, body); next["credentials"] = Credentials(S(body, "pin")); Save(next);
-                    return AsJson(D("adminToken", NewAdminSession(), "state", PublicState()));
-                }
-                if (r.Method == "POST" && r.Path == "/api/admin/login")
-                {
-                    if (State["credentials"] == null) throw new ApiError(409, "Configure o PIN primeiro.");
-                    if (LoginBlockedUntil > DateTime.UtcNow) throw new ApiError(429, "Muitas tentativas. Aguarde 30 segundos e tente novamente.");
-                    string pin = S(body, "pin"); if (pin.Length > 20 || !PinMatches(pin)) { BadLogins++; if (BadLogins >= 5) { LoginBlockedUntil = DateTime.UtcNow.AddSeconds(30); BadLogins = 0; } Thread.Sleep(250); throw new ApiError(401, "PIN incorreto."); }
-                    BadLogins = 0; return AsJson(D("adminToken", NewAdminSession()));
-                }
+                if (r.Method == "POST" && r.Path == "/api/admin/access") return AsJson(D("adminToken", NewAdminSession()));
+                if (r.Method == "POST" && (r.Path == "/api/admin/setup" || r.Path == "/api/admin/login" || r.Path == "/api/admin/config" || r.Path == "/api/admin/open")) throw new ApiError(409, "Esta urna já vem pronta para votar. Não há senha nem etapa de preparação.");
                 if (r.Path.StartsWith("/api/admin/", StringComparison.Ordinal))
                 {
                     NeedAdmin(r);
                     if (r.Method == "GET" && r.Path == "/api/admin/state") return AsJson(AdminState());
-                    if (r.Method == "POST" && r.Path == "/api/admin/config") { NeedSetup(); Dictionary<string, object> next = Clone(State); Configure(next, body); Save(next); return AsJson(AdminState()); }
-                    if (r.Method == "POST" && r.Path == "/api/admin/open")
-                    {
-                        NeedSetup(); ValidateCandidates(State, true); Dictionary<string, object> next = Clone(State); next["status"] = "open"; next["openedAt"] = Now(); next["electionId"] = ElectionId(next); Save(next); return AsJson(PublicState());
-                    }
                     if (r.Method == "POST" && r.Path == "/api/admin/close")
                     {
                         NeedOpen(); Dictionary<string, object> next = Clone(State); next["status"] = "closed"; next["closedAt"] = Now(); Save(next); Voters.Clear(); return AsJson(AdminState());
