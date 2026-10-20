@@ -2,19 +2,21 @@
 
 Aplicativo portátil para a eleição do grêmio da escola **Araci Zebral Teixeira**, em notebooks com **Windows 10 ou 11**. Funciona sem internet, com executável em C#/.NET Framework e interface local no navegador. Cada notebook guarda uma urna independente; um pendrive permite distribuir o pacote e reunir os resultados ao final.
 
-O aluno informa nome e série/turma, digita os dois dígitos da chapa e confirma a escolha. A interface apresenta fotos, propostas e integrantes. A comissão configura a eleição com PIN, encerra a votação e exporta CSV para Excel, JSON para consolidação e relatório para impressão/PDF. O sistema mantém contagens agregadas e uma lista de comparecimento separada, sem relatório de voto por aluno.
+O aluno informa nome e série/turma, digita os dois dígitos da chapa e confirma a escolha. A interface destaca uma foto do grupo de cada chapa, com o nome da representante, propostas e integrantes. A comissão configura a eleição com PIN, encerra a votação e exporta CSV para Excel, JSON para consolidação e relatório para impressão/PDF. O sistema mantém contagens agregadas e uma lista de comparecimento separada, sem relatório de voto por aluno.
 
 ## Usar o aplicativo
 
 Baixe [releases/Urna-Araci-Zebral.zip](releases/Urna-Araci-Zebral.zip), extraia a pasta inteira no disco local de cada notebook e abra `UrnaEstudantil.exe`. Distribua cópias ainda não iniciadas; cada urna deve ter identificação própria. Configure uma urna e use a exportação/importação de configuração para compartilhar nomes, números, fotos e propostas com as demais.
 
+Na tela inicial e nos detalhes da chapa, **Ampliar foto** mostra a imagem inteira do grupo. Use **Voltar à chapa** para retornar.
+
 Consulte o [manual em HTML](docs/LEIA-ME.html) ou o [manual em PDF](docs/Manual-de-uso.pdf) para preparar, operar, finalizar e somar as urnas. A pasta `Dados` criada durante o uso é essencial para preservar os votos e não pertence ao repositório.
 
 ## Chapas cadastradas
 
-- **01 — Chapa Conexão:** representante, integrantes, propostas e fotos ainda pendentes.
-- **07 — Liderança Jovem:** Isabelly M, do 1º ano D, com equipe, propostas e fotos cadastradas.
-- **10 — Renascer:** Fernanda Santos de Souza, do 1º ano D, com propostas, fotos e oito nomes na equipe cadastrada. **Pyetro, do 2º ano D**, e **Pyetro Wilians, do 1º ano A**, são integrantes distintos.
+- **01 — Chapa Conexão:** Julia Oliveira, do 2º ano A, com foto do grupo, oito integrantes e oito propostas cadastradas: saúde mental e bem-estar, futuro profissional, aluno destaque, apoio aos alunos, melhorias na escola, ideia do mês, campanha solidária e assembleia dos alunos.
+- **07 — Liderança Jovem:** Isabelly M, do 1º ano D, com foto do grupo, equipe e propostas cadastradas.
+- **10 — Renascer:** Fernanda Santos de Souza, do 1º ano D, com foto do grupo, propostas e oito nomes na equipe cadastrada. **Pyetro, do 2º ano D**, e **Pyetro Wilians, do 1º ano A**, são integrantes distintos.
 
 ## Compilar e verificar
 

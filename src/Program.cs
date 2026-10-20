@@ -86,9 +86,13 @@ internal static class Program
     {
         List<object> candidates = new List<object>();
         string[] names = { "Chapa Conexão", "Liderança Jovem", "Renascer" }, numbers = { "01", "07", "10" };
-        for (int i = 1; i <= 3; i++) candidates.Add(D("id", "c" + i, "name", names[i - 1], "number", numbers[i - 1], "portrait", i == 2 ? SeedImage("chapa-07-representante.jpeg") : "", "groupPhoto", i == 2 ? SeedImage("chapa-07-grupo.jpeg") : "", "proposals", i == 2 ? "Melhorias nos banheiros.\nCriação de um espaço de apoio feminino, com kits de higiene e auxílio da escola.\nDisponibilização mensal de absorventes para situações de emergência.\nCriação de uma rede de apoio para pessoas com deficiência.\nCriação de um espaço de lazer voltado à inclusão e ao estímulo dos alunos.\nRealização de dinâmicas solidárias para arrecadação de roupas." : "", "members", i == 2 ? "Isabelly M — 1º ano D\nSophia Januario — 1º ano D\nMaria Luiza — 1º ano D\nEnzo Antoni — 2º ano B\nGuilherme — 1º ano G\nKauan — 1º ano C\nLayla Santos — 2º ano C\nNycolas Oliveira — 2º ano F" : "", "representativeName", i == 2 ? "Isabelly M — 1º ano D" : ""));
+        for (int i = 1; i <= 3; i++) candidates.Add(D("id", "c" + i, "name", names[i - 1], "number", numbers[i - 1], "portrait", "", "groupPhoto", i == 2 ? SeedImage("chapa-07-grupo.jpeg") : "", "proposals", i == 2 ? "Melhorias nos banheiros.\nCriação de um espaço de apoio feminino, com kits de higiene e auxílio da escola.\nDisponibilização mensal de absorventes para situações de emergência.\nCriação de uma rede de apoio para pessoas com deficiência.\nCriação de um espaço de lazer voltado à inclusão e ao estímulo dos alunos.\nRealização de dinâmicas solidárias para arrecadação de roupas." : "", "members", i == 2 ? "Isabelly M — 1º ano D\nSophia Januario — 1º ano D\nMaria Luiza — 1º ano D\nEnzo Antoni — 2º ano B\nGuilherme — 1º ano G\nKauan — 1º ano C\nLayla Santos — 2º ano C\nNycolas Oliveira — 2º ano F" : "", "representativeName", i == 2 ? "Isabelly M — 1º ano D" : ""));
+        Dictionary<string, object> conexao = Obj(candidates[0]);
+        conexao["groupPhoto"] = SeedImage("chapa-01-grupo.jpeg");
+        conexao["representativeName"] = "Julia Oliveira — 2º ano A";
+        conexao["members"] = "Julia Oliveira — 2º ano A\nJuan Ferreira — 2º ano A\nAna Julia — 2º ano B\nAna Beatriz — 1º ano B\nZaqueu — 2º ano B\nCaique — 2º ano B\nHadassa Nascimento — 1º ano D\nRyan Dantas — 1º ano C";
+        conexao["proposals"] = "Saúde mental e bem-estar.\nFuturo profissional.\nAluno destaque.\nApoio aos alunos.\nMelhorias na escola.\nProjeto ideia do mês.\nCampanha solidária.\nAssembleia dos alunos.";
         Dictionary<string, object> renascer = Obj(candidates[2]);
-        renascer["portrait"] = SeedImage("chapa-10-representante.jpeg");
         renascer["groupPhoto"] = SeedImage("chapa-10-grupo.jpeg");
         renascer["representativeName"] = "Fernanda Santos de Souza — 1º ano D";
         renascer["members"] = "Fernanda Santos de Souza — 1º ano D\nCaylon — 2º ano D\nGuilherme Ferreira — 2º ano D\nGeovana Almeida — 2º ano B\nPyetro — 2º ano D\nPyetro Wilians — 1º ano A\nGustavo — 1º ano A\nKauany Sonya — 2º ano D";
@@ -231,16 +235,22 @@ internal static class Program
     {
         next["school"] = Clean(S(input, "school"), 160); next["electionTitle"] = Clean(S(input, "electionTitle"), 160); next["urnName"] = Clean(S(input, "urnName"), 80);
         List<object> source = List(Get(input, "candidates")), candidates = new List<object>(); if (source.Count != 3) throw new ApiError(400, "Cadastre exatamente três candidatas.");
-        for (int i = 0; i < 3; i++) { Dictionary<string, object> c = Obj(source[i]); if (S(c, "id") != "c" + (i + 1)) throw new ApiError(400, "Ordem das candidatas inválida."); candidates.Add(D("id", "c" + (i + 1), "name", Clean(S(c, "name"), 120), "number", Clean(S(c, "number"), 2), "portrait", ImageValue(c, "portrait"), "groupPhoto", ImageValue(c, "groupPhoto"), "proposals", ProposalText(S(c, "proposals")), "members", ProposalText(S(c, "members")), "representativeName", Clean(S(c, "representativeName"), 120))); }
+        for (int i = 0; i < 3; i++) { Dictionary<string, object> c = Obj(source[i]); if (S(c, "id") != "c" + (i + 1)) throw new ApiError(400, "Ordem das candidatas inválida."); candidates.Add(D("id", "c" + (i + 1), "name", Clean(S(c, "name"), 120), "number", Clean(S(c, "number"), 2), "portrait", "", "groupPhoto", ImageValue(c, "groupPhoto"), "proposals", ProposalText(S(c, "proposals")), "members", ProposalText(S(c, "members")), "representativeName", Clean(S(c, "representativeName"), 120))); }
         next["candidates"] = candidates; next["electionId"] = ""; ValidateCandidates(next, false);
+    }
+    private static List<object> DisplayCandidates()
+    {
+        List<object> candidates = new List<object>();
+        foreach (object item in List(State["candidates"])) { Dictionary<string, object> c = Clone(Obj(item)); c["portrait"] = ""; candidates.Add(c); }
+        return candidates;
     }
     private static Dictionary<string, object> PublicState()
     {
-        return D("urnId", State["urnId"], "electionId", State["electionId"], "urnName", State["urnName"], "school", State["school"], "electionTitle", State["electionTitle"], "status", State["status"], "configured", State["credentials"] != null, "candidates", State["candidates"], "total", List(State["participants"]).Count, "csrfToken", Csrf);
+        return D("urnId", State["urnId"], "electionId", State["electionId"], "urnName", State["urnName"], "school", State["school"], "electionTitle", State["electionTitle"], "status", State["status"], "configured", State["credentials"] != null, "candidates", DisplayCandidates(), "total", List(State["participants"]).Count, "csrfToken", Csrf);
     }
     private static Dictionary<string, object> AdminState()
     {
-        Dictionary<string, object> d = Clone(State); d.Remove("credentials"); d["configured"] = State["credentials"] != null; d["total"] = Total(State);
+        Dictionary<string, object> d = Clone(State); d.Remove("credentials"); d["candidates"] = DisplayCandidates(); d["configured"] = State["credentials"] != null; d["total"] = Total(State);
         // Live per-choice totals and names together permit differential vote inference.
         if (S(State, "status") == "open") { d.Remove("counts"); d.Remove("participants"); }
         return d;

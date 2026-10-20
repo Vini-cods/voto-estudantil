@@ -1,12 +1,13 @@
 """End-to-end checks for the actual portable executable; Python standard library only.
 
-Usage: python work/test_urna.py [--exe work/urna-build/UrnaEstudantil.exe]
+Usage: python tests/test_urna.py [--exe dist/Urna-Araci-Zebral/UrnaEstudantil.exe]
 Test election data lives in disposable temporary folders, never in a user's urn.
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
 from concurrent.futures import ThreadPoolExecutor
 import copy
 import csv
@@ -22,6 +23,7 @@ import urllib.request
 
 
 HERE = Path(__file__).resolve().parent
+PROJECT = HERE.parent
 ROUTES = {
     "setup": "/api/admin/setup",
     "login": "/api/admin/login",
@@ -170,6 +172,65 @@ def no_choice_in_participants(batch):
         require(not (set(participant) & sensitive), "Participant export links student to choice/token")
 
 
+def check_group_defaults(public, web):
+    expected = [
+        ("01", "Julia Oliveira — 2º ano A", 8),
+        ("07", "Isabelly M — 1º ano D", 6),
+        ("10", "Fernanda Santos de Souza — 1º ano D", 10),
+    ]
+    require(len(public["candidates"]) == 3, "The default election does not contain exactly three candidates")
+    for candidate, (number, representative, proposal_count) in zip(public["candidates"], expected):
+        require(candidate["number"] == number and candidate["representativeName"] == representative,
+                f"Default candidate {number} has the wrong number or representative")
+        require(not candidate.get("portrait"), f"Default candidate {number} still exposes an individual portrait")
+        require(len(candidate["members"].splitlines()) == 8,
+                f"Default candidate {number} does not have the eight supplied members")
+        require(len(candidate["proposals"].splitlines()) == proposal_count,
+                f"Default candidate {number} has the wrong number of proposal lines")
+        prefix, encoded = candidate["groupPhoto"].split(",", 1)
+        original = (web / "assets" / f"chapa-{number}-grupo.jpeg").read_bytes()
+        require(prefix == "data:image/jpeg;base64" and base64.b64decode(encoded, validate=True) == original,
+                f"Default group photograph {number} differs from the supplied original")
+    require(public["candidates"][0]["proposals"].splitlines() == [
+        "Saúde mental e bem-estar.", "Futuro profissional.", "Aluno destaque.", "Apoio aos alunos.",
+        "Melhorias na escola.", "Projeto ideia do mês.", "Campanha solidária.", "Assembleia dos alunos.",
+    ], "The eight Conexão proposals differ from the supplied content")
+    members = public["candidates"][2]["members"].splitlines()
+    require("Pyetro — 2º ano D" in members and "Pyetro Wilians — 1º ano A" in members,
+            "The two distinct Pyetro students were merged or changed")
+
+
+def check_legacy_portraits(exe, web, data):
+    # Synthetic one-pixel fixture: never edits or creates a supplied student photograph.
+    portrait = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9kR0sAAAAASUVORK5CYII="
+    candidates = copy.deepcopy(CANDIDATES)
+    candidates[0]["portrait"] = portrait
+    urn = Urn(exe, web, data)
+    try:
+        urn.start()
+        urn.setup(candidates=candidates)
+        require(not urn.request("/api/state")[1]["candidates"][0].get("portrait"),
+                "Importing a legacy configuration exposed an individual portrait")
+        urn.stop()
+        state_path = data / "urna.json"
+        stored = json.loads(state_path.read_text(encoding="utf-8-sig"))
+        require(not stored["candidates"][0].get("portrait"),
+                "A newly saved configuration retained a legacy individual portrait")
+        stored["candidates"][0]["portrait"] = portrait
+        legacy_bytes = json.dumps(stored, ensure_ascii=False).encode("utf-8")
+        state_path.write_bytes(legacy_bytes)
+        urn.start()
+        require(not urn.request("/api/state")[1]["candidates"][0].get("portrait"),
+                "Public state exposed a portrait from an existing data file")
+        urn.admin = urn.call("login", {"pin": PIN})["adminToken"]
+        require(not urn.state()["candidates"][0].get("portrait"),
+                "Administrator state exposed a portrait from an existing data file")
+        require(state_path.read_bytes() == legacy_bytes,
+                "Reading an existing data file rewrote or removed its legacy portrait")
+    finally:
+        urn.stop()
+
+
 def expect_start_failure(urn, message):
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
@@ -200,6 +261,8 @@ def run(exe: Path, web: Path):
             require(first.csrf in index, "Index and API do not agree on session token")
             public = first.request("/api/state")[1]
             require("counts" not in public and "participants" not in public, "Public state leaks election data")
+            check_group_defaults(public, web)
+            print("PASS group-only defaults, all three original group photos and supplied candidate metadata")
             rejected(first.request(ROUTES["setup"], {"pin": PIN}, csrf=False), "Missing CSRF accepted")
             first.setup()
             configured = first.request("/api/state")[1]
@@ -317,6 +380,9 @@ def run(exe: Path, web: Path):
                      "Duplicate student between offline urns accepted")
             print("PASS exact consolidation and refusal of repeated urns, incompatible elections and duplicate students")
 
+            check_legacy_portraits(exe, web, root / "legacy")
+            print("PASS legacy portrait masking, import compatibility and existing file preservation")
+
             first.stop()
             state_files = [p for p in first.data.glob("*.json") if p.is_file()]
             require(len(state_files) == 1, f"Cannot identify the persisted JSON state: {state_files}")
@@ -364,8 +430,8 @@ def metadata_smoke(exe: Path, web: Path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--exe", type=Path, default=HERE / "urna-build" / "UrnaEstudantil.exe")
-    parser.add_argument("--web-dir", type=Path, default=HERE / "urna-src" / "web")
+    parser.add_argument("--exe", type=Path, default=PROJECT / "dist" / "Urna-Araci-Zebral" / "UrnaEstudantil.exe")
+    parser.add_argument("--web-dir", type=Path, default=PROJECT / "src" / "web")
     parser.add_argument("--metadata-smoke", action="store_true")
     args = parser.parse_args()
     (metadata_smoke if args.metadata_smoke else run)(args.exe.resolve(), args.web_dir.resolve())

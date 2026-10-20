@@ -11,6 +11,11 @@ New-Item -ItemType Directory -Force -Path $buildDestination | Out-Null
 & (Join-Path $PSScriptRoot 'src\build.ps1') -OutputDirectory $buildDestination
 if ($LASTEXITCODE -ne 0) { throw 'Compilation failed.' }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'src\web') -Destination $buildDestination -Recurse -Force
+# Remove retired application assets from previously generated output folders.
+foreach ($retiredAsset in @('chapa-07-representante.jpeg', 'chapa-10-representante.jpeg', 'gresp.jpeg', 'simbolo-institucional.jpeg')) {
+    $retiredAssetPath = Join-Path $buildDestination ('web\assets\' + $retiredAsset)
+    if (Test-Path -LiteralPath $retiredAssetPath -PathType Leaf) { Remove-Item -LiteralPath $retiredAssetPath -Force }
+}
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'packaging\INICIAR.cmd'),(Join-Path $PSScriptRoot 'packaging\COMECE-AQUI.txt') -Destination $buildDestination -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'docs\LEIA-ME.html'),(Join-Path $PSScriptRoot 'docs\Manual-de-uso.pdf') -Destination $buildDestination -Force
 $sourceDestination = Join-Path $buildDestination 'codigo-fonte'

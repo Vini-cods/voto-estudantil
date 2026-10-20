@@ -20,3 +20,43 @@
 @media(max-width:900px){.candidate-details .member-list{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.candidate-details .member-list{grid-template-columns:1fr}.ballot-group{max-height:80px}.representative-label{font-size:10px}.urna-screen{min-height:432px}}
 .group-photo img{position:absolute;inset:0;display:block;width:100%;height:100%;min-width:0;min-height:0;object-fit:contain;object-position:center}
+
+/* Group photographs are the only candidate images used by the interface. */
+.group-photo{height:300px;width:100%;padding:0;border-radius:0;background:#e5e9df}
+.group-photo img{object-fit:contain}
+.photo-button,.detail-photo-button{cursor:zoom-in;position:relative}
+.photo-zoom-label{position:absolute;bottom:11px;right:11px;display:inline-flex;align-items:center;gap:6px;border:1px solid #ffffff80;background:#ffffffeb;color:#284d3a;padding:7px 10px;border-radius:6px;font-size:10px;font-weight:650;box-shadow:0 2px 12px #14291a15}
+.photo-zoom-label svg{height:13px;width:13px}
+.institutional-logos img{background:transparent;border-radius:0}
+.logo-gresp{width:138px;height:64px}
+.logo-institucional{width:65px;height:65px}
+.topbar{height:94px}
+.hero{padding-top:30px;padding-bottom:24px}
+.hero h1{font-size:49px}
+.hero p{font-size:13px;margin-top:14px}
+.candidate-detail-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:28px;align-items:start}
+.candidate-detail-layout .details-group{margin:0;min-width:0}
+.detail-photo-button{display:block;width:100%;height:420px;padding:0;background:#e7ecdf;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.detail-photo-button img{width:100%;height:100%;display:block;object-fit:contain}
+.details-group figcaption{margin-top:11px;color:var(--muted);font-size:11px;line-height:1.6}
+.details-copy .proposal-list{grid-template-columns:1fr;font-size:12px;gap:8px;margin-top:15px}
+.candidate-details .details-copy .member-list{grid-template-columns:1fr 1fr;font-size:10px;gap:7px}
+.candidate-details .details-copy .team-section{margin-top:20px;padding-top:16px}
+.photo-viewer>img{width:100%;height:calc(100vh - 245px);min-height:220px;max-height:650px;display:block;object-fit:contain;background:#e6ebdf;border-radius:10px}
+.photo-viewer .form-actions{margin-top:17px}
+.urna-screen{min-height:460px}
+.ballot-choice{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:start;gap:18px}
+.ballot-choice .digit-row{flex-wrap:nowrap;gap:4px;margin-bottom:21px}
+.ballot-choice .digit-row span{margin-right:4px;font-size:12px}
+.ballot-choice .digit{height:49px;width:38px;min-width:38px;font-size:33px}
+.ballot-choice .choice-info strong{margin-top:6px;font-size:22px;line-height:1.2}
+.ballot-choice .representative-label{margin:0;font-size:11px;line-height:1.6}
+.ballot-photo-frame{width:100%;height:256px;border:1px solid #aeb9a4;background:#e2e8d9;border-radius:4px;overflow:hidden}
+.ballot-photo-frame>img{height:100%;width:100%;object-fit:contain;display:block}
+.ballot-photo-frame .photo-placeholder{height:100%;display:grid;place-content:center;justify-items:center;color:#87967d;gap:10px;font-size:10px}
+.ballot-photo-frame .photo-placeholder svg{width:40px;height:40px}
+.vote-hint{font-size:10px;line-height:1.6;color:#6b7862;margin-top:17px}
+@media(min-width:901px) and (max-height:850px){.group-photo{height:275px}.hero{padding-top:24px;padding-bottom:18px}.hero h1{font-size:44px}.topbar{height:84px}.detail-photo-button{height:390px}.candidate-details .details-copy .proposal-list{gap:7px}.candidate-details .details-copy .team-section{padding-top:13px;margin-top:16px}}
+@media(max-width:900px){.group-photo{height:250px}.logo-gresp{width:112px;height:58px}.logo-institucional{width:58px;height:58px}.candidate-detail-layout{gap:20px}.detail-photo-button{height:350px}.ballot-choice{gap:10px;grid-template-columns:1fr 1fr}.ballot-photo-frame{height:238px}.ballot-choice .digit{width:32px;min-width:32px;height:44px;font-size:29px}.ballot-choice .choice-info strong{font-size:18px}}
+@media(max-width:650px){.group-photo{height:200px}.candidates{gap:8px}.photo-zoom-label{bottom:7px;right:7px;padding:5px 6px;font-size:8px;gap:3px}.photo-zoom-label svg{width:10px;height:10px}.hero h1{font-size:40px}.topbar{height:88px}.logo-gresp{width:96px;height:49px}.logo-institucional{width:49px;height:49px}.institutional-logos{gap:8px}.candidate-detail-layout{grid-template-columns:1fr;gap:22px}.detail-photo-button{height:350px}.candidate-details .details-copy .member-list{grid-template-columns:1fr 1fr}.ballot-choice{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ballot-photo-frame{height:230px}.ballot-choice .digit-row{gap:3px}.ballot-choice .digit-row span{font-size:10px;margin:0}.ballot-choice .digit{width:28px;min-width:28px;height:41px;font-size:27px}.ballot-choice .choice-info strong{font-size:17px}.ballot-choice .representative-label{font-size:10px}.urna-screen{padding:18px;min-height:455px}.ballot-choice .vote-hint{font-size:9px}.photo-viewer>img{height:calc(100dvh - 225px)}}
+@media print{#print-root .institutional-logos img{background:transparent}}

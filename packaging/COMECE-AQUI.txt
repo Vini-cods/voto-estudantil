@@ -9,8 +9,8 @@ Versao 1.0 - 19/10/2026
 3. Entre em Comissao. Crie uma senha numerica (6 a 20 digitos).
 4. Use um nome de urna DIFERENTE em cada notebook. Ex.: Urna 01, Urna 02.
    A escola, o titulo da eleicao e as chapas devem ser IGUAIS em todos.
-5. Adicione as fotos das representantes e dos grupos. Salve a configuracao.
-   Exportar/Importar configuracao leva as mesmas fotos/chapas aos outros
+5. Confira uma foto de grupo por chapa, nomes, propostas e integrantes.
+   Salve a configuracao. Exportar/Importar leva as mesmas fotos/chapas aos outros
    notebooks sem levar votos, senha ou identidade da urna.
 6. Abra a votacao quando a configuracao estiver pronta.
 7. Finalize com a senha da comissao. O resultado CSV para Excel sera baixado.
@@ -19,9 +19,14 @@ Versao 1.0 - 19/10/2026
    Exporte o resultado geral para Excel ou imprima/salve como PDF.
 
 CHAPAS JA CADASTRADAS:
-01 - Chapa Conexao
-07 - Lideranca Jovem
-10 - Renascer
+01 - Chapa Conexao - Julia Oliveira, 2o ano A
+07 - Lideranca Jovem - Isabelly M, 1o ano D
+10 - Renascer - Fernanda Santos de Souza, 1o ano D
+
+As tres chapas ja incluem foto do grupo, propostas e integrantes.
+A foto do grupo aparece em destaque no inicio, nos detalhes e na votacao.
+No inicio ou nos detalhes, use "Ampliar foto" para ver o grupo inteiro.
+Use "Voltar a chapa" para retornar.
 
 IMPORTANTE PARA USAR EM VARIOS NOTEBOOKS:
 Cada notebook guarda votos independentemente e funciona sem internet.
@@ -39,5 +44,5 @@ nao cria uma lista ligando cada aluno a uma chapa. O computador e os arquivos
 precisam ficar sob supervisao da comissao; trata-se de uma urna escolar,
 sem as garantias de seguranca de uma urna oficial.
 
-Este pacote inicia SEM votos e SEM senha. As chapas Lideranca Jovem 07 e Renascer 10 ja incluem fotos, propostas e integrantes. Faltam os materiais da Chapa Conexao 01.
+Este pacote inicia SEM votos e SEM senha, com as tres chapas configuradas.
 Leia LEIA-ME.html ou Manual-de-uso.pdf para as instrucoes completas.
