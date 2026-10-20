@@ -1,10 +1,12 @@
 # Verificação da urna portátil
 
-Em **20/10/2026**, o executável final passou pelo roteiro completo de integração, incluindo o cadastro das três chapas, as fotos de grupo e a compatibilidade com arquivos antigos. A execução terminou em `ALL INTEGRATION CHECKS PASSED`.
+Em **20/10/2026**, o executável final passou pelo roteiro completo de integração, incluindo o funcionamento como arquivo único, o cadastro das três chapas, as fotos de grupo e a compatibilidade com arquivos antigos. A execução terminou em `ALL INTEGRATION CHECKS PASSED`.
 
 ## Execução
 
 O roteiro usa somente a biblioteca padrão do Python e inicia o programa real com dados de votação fictícios em pastas temporárias. Nenhuma urna real é aberta ou alterada.
+
+A execução completa começa com um teste do EXE isolado e depois verifica as operações com `--web-dir` externo. Para executar somente a verificação do arquivo único, acrescente `--standalone-smoke` ao comando.
 
 ```powershell
 python tests/test_urna.py --exe dist/Urna-Araci-Zebral/UrnaEstudantil.exe --web-dir src/web
@@ -12,6 +14,10 @@ python tests/test_urna.py --exe dist/Urna-Araci-Zebral/UrnaEstudantil.exe --web-
 
 ## Resultados verificados
 
+- Uma cópia apenas do EXE, em uma pasta inicialmente vazia e iniciada com outro diretório de trabalho, funcionou sem pasta `web`, argumentos de recursos ou arquivos auxiliares. O aplicativo criou `Dados` ao lado do EXE.
+- A página embutida recebeu o token correto da sessão. JavaScript, CSS, favicon, três fotos de grupo e dois logos PNG foram servidos com conteúdo idêntico às fontes. Nenhum recurso web foi extraído para a pasta do programa, para `Dados` ou para o diretório de trabalho.
+- Nesse modo, um voto fictício foi confirmado e preservado após reiniciar. O arquivo de dados existente permaneceu idêntico na reabertura; a apuração após encerrar teve exatamente um voto e um participante.
+- O argumento explícito `--web-dir` foi comprovado com uma alteração exclusiva na página externa de teste. Um diretório inexistente ou com um recurso obrigatório ausente impediu a abertura antes de criar a nova pasta de dados.
 - As três chapas têm números `01`, `07` e `10`, representantes e oito integrantes por chapa. A Conexão tem oito propostas; a Liderança Jovem, seis; a Renascer, dez. Os dois alunos chamados Pyetro, de séries diferentes, permanecem distintos.
 - As três fotos de grupo recebidas no estado inicial são idênticas, byte a byte, aos arquivos originais distribuídos. O estado público não apresenta retratos individuais.
 - Configurações antigas com retratos individuais continuam sendo aceitas, mas o retrato não é salvo em novas configurações. Ao abrir um arquivo de dados antigo, as respostas pública e administrativa ocultam o retrato sem reescrever o arquivo existente.
@@ -24,7 +30,7 @@ python tests/test_urna.py --exe dist/Urna-Araci-Zebral/UrnaEstudantil.exe --web-
 - A consolidação recusa urnas repetidas, eleições ou números incompatíveis, totais divergentes e participantes repetidos entre notebooks.
 - Uma segunda instância não pode usar a mesma pasta de dados. Um arquivo JSON danificado impede a abertura e é preservado, sem reinicialização silenciosa.
 
-No teste de apuração, a primeira urna recebeu quatro votos: um na chapa `01`, um na `07`, um branco e um nulo. A segunda recebeu um voto na chapa `10`. O consolidado teve **um voto em cada uma das cinco opções**, total de **cinco votos e cinco participantes**.
+No teste de consolidação, a primeira urna recebeu quatro votos: um na chapa `01`, um na `07`, um branco e um nulo. A segunda recebeu um voto na chapa `10`. O consolidado teve **um voto em cada uma das cinco opções**, total de **cinco votos e cinco participantes**.
 
 ## Limites da operação em vários notebooks
 

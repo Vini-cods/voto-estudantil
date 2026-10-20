@@ -1,11 +1,11 @@
 URNA ESTUDANTIL - ARACI ZEBRAL TEIXEIRA
-Versao 1.0 - 19/10/2026
+Versao 1.1 - 20/10/2026
 
-1. Extraia o ZIP. Copie a PASTA INTEIRA para o disco de cada notebook Windows.
-   Faca essas copias antes de iniciar qualquer urna.
-2. Execute UrnaEstudantil.exe. O navegador abre automaticamente.
-   Mantenha a janela do programa aberta. INICIAR.cmd tambem inicia o programa
-   e mantem mensagens de erro visiveis se houver algum problema.
+1. Baixe UrnaEstudantil.exe. Crie uma pasta propria no disco local de cada
+   notebook Windows e copie somente o EXE para ela.
+2. Abra o EXE. Fotos, logotipos e interface ja estao incluidos; o navegador
+   abre offline, sem instalacao ou extracao. Mantenha o programa aberto.
+   O ZIP completo e opcional, com manuais, fontes e INICIAR.cmd de apoio.
 3. Entre em Comissao. Crie uma senha numerica (6 a 20 digitos).
 4. Use um nome de urna DIFERENTE em cada notebook. Ex.: Urna 01, Urna 02.
    A escola, o titulo da eleicao e as chapas devem ser IGUAIS em todos.
@@ -35,8 +35,10 @@ se um aluno ja votou em OUTRO notebook. A soma confere duplicidades de
 nome+serie e bloqueia a apuracao se encontra repeticao.
 Use o mesmo padrao de serie e turma e confira os alunos presencialmente.
 
-A pasta Dados e criada no primeiro uso. Nao apague, mova, edite nem substitua
-essa pasta durante a eleicao. Nao copie uma urna ja iniciada para criar outra.
+A pasta Dados e criada ao lado do EXE no primeiro uso e guarda esta urna.
+Nao apague, mova, edite nem substitua essa pasta durante a eleicao.
+Para outro notebook, copie so o EXE original; nao leve Dados de outra urna.
+Ao atualizar na mesma pasta, troque apenas o EXE e preserve Dados.
 Guarde uma copia da pasta completa apos o encerramento.
 
 O resultado guarda contagens; a presenca guarda nomes e series. O sistema

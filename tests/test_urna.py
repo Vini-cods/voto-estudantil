@@ -14,6 +14,7 @@ import csv
 import io
 import json
 from pathlib import Path
+import shutil
 import socket
 import subprocess
 import tempfile
@@ -61,8 +62,10 @@ def unwrap_state(value):
 
 
 class Urn:
-    def __init__(self, exe: Path, web: Path, data: Path):
-        self.exe, self.web, self.data = exe, web, data
+    def __init__(self, exe: Path, web: Path | None, data: Path | None, cwd: Path | None = None):
+        self.exe, self.web, self.cwd = exe, web, cwd
+        self.data = exe.parent / "Dados" if data is None else data
+        self.override_data = data is not None
         self.proc = None
         self.csrf = ""
         self.admin = ""
@@ -70,29 +73,38 @@ class Urn:
         self.log = None
 
     def command(self, port=None):
-        return [str(self.exe), "--no-browser", "--data-dir", str(self.data),
-                "--port", str(port or self.port), "--web-dir", str(self.web)]
+        command = [str(self.exe), "--no-browser", "--port", str(port or self.port)]
+        if self.override_data:
+            command.extend(["--data-dir", str(self.data)])
+        if self.web is not None:
+            command.extend(["--web-dir", str(self.web)])
+        return command
 
     def start(self):
-        self.data.mkdir(parents=True, exist_ok=True)
+        if self.override_data:
+            self.data.mkdir(parents=True, exist_ok=True)
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))
             self.port = sock.getsockname()[1]
         self.log = tempfile.TemporaryFile(mode="w+b")
-        self.proc = subprocess.Popen(self.command(), stdout=self.log, stderr=self.log)
-        deadline = time.monotonic() + 12
-        while time.monotonic() < deadline:
-            if self.proc.poll() is not None:
-                raise AssertionError("Urn exited during startup: " + self.read_log())
-            try:
-                status, state = self.request("/api/state")
-                if status == 200:
-                    self.csrf = state["csrfToken"]
-                    return self
-            except (OSError, urllib.error.URLError, KeyError):
-                pass
-            time.sleep(0.1)
-        raise AssertionError("Urn did not start: " + self.read_log())
+        try:
+            self.proc = subprocess.Popen(self.command(), cwd=self.cwd, stdout=self.log, stderr=self.log)
+            deadline = time.monotonic() + 12
+            while time.monotonic() < deadline:
+                if self.proc.poll() is not None:
+                    raise AssertionError("Urn exited during startup: " + self.read_log())
+                try:
+                    status, state = self.request("/api/state")
+                    if status == 200:
+                        self.csrf = state["csrfToken"]
+                        return self
+                except (OSError, urllib.error.URLError, KeyError):
+                    pass
+                time.sleep(0.1)
+            raise AssertionError("Urn did not start: " + self.read_log())
+        except BaseException:
+            self.stop()
+            raise
 
     def read_log(self):
         if not self.log:
@@ -247,9 +259,95 @@ def expect_start_failure(urn, message):
         require(code != 0, message + ": exit code 0; " + log.read().decode("utf-8", errors="replace"))
 
 
+def standalone_smoke(exe: Path, web: Path):
+    """Exercise the copied EXE alone, default data location and explicit web override."""
+    require(exe.is_file(), f"Executable not found: {exe}")
+    with tempfile.TemporaryDirectory(prefix="urna-standalone-") as tmp:
+        root = Path(tmp)
+        portable = root / "portable copy"
+        elsewhere = root / "different working directory"
+        portable.mkdir()
+        elsewhere.mkdir()
+        copied_exe = portable / "UrnaEstudantil.exe"
+        shutil.copyfile(exe, copied_exe)
+        require({p.name for p in portable.iterdir()} == {copied_exe.name},
+                "Standalone test folder did not start with the EXE alone")
+        urn = Urn(copied_exe, None, None, cwd=elsewhere)
+        try:
+            urn.start()
+            public = urn.request("/api/state")[1]
+            require(public["status"] == "setup" and not public["configured"] and public["total"] == 0,
+                    "Standalone EXE did not begin with a clean unconfigured election")
+            check_group_defaults(public, web)
+            index = urn.request("/")[1]
+            expected_index = (web / "index.html").read_text(encoding="utf-8-sig").replace("__CSRF_TOKEN__", urn.csrf)
+            require(index.replace("\r\n", "\n") == expected_index.replace("\r\n", "\n"),
+                    "Embedded index differs from the source or has an unreplaced session token")
+            resources = ["app.js", "style.css", "favicon.svg", "assets/gresp.png", "assets/simbolo-institucional.png"]
+            resources.extend(f"assets/chapa-{number}-grupo.jpeg" for number in ("01", "07", "10"))
+            for relative in resources:
+                with urllib.request.urlopen(f"http://127.0.0.1:{urn.port}/{relative}", timeout=20) as response:
+                    require(response.read() == (web / relative).read_bytes(),
+                            f"Embedded resource {relative} differs from the current source")
+                    if relative.endswith(".png"):
+                        require(response.headers.get_content_type() == "image/png",
+                                f"Embedded logo {relative} has the wrong content type")
+            rejected(urn.request("/%2e%2e/Program.cs"), "Embedded resource path escaped its resource directory")
+            rejected(urn.request("/assets/missing.png"), "Missing embedded resource did not return a client error")
+            require((portable / "Dados" / "urna.json").is_file(),
+                    "Default data was not created beside the standalone EXE")
+            urn.setup("Urna portátil de teste", candidates=public["candidates"])
+            urn.call("open", {}, admin=True)
+            urn.vote("Aluno Teste Portátil", "c1", "9º T")
+            state_path = portable / "Dados" / "urna.json"
+            committed_bytes = state_path.read_bytes()
+            urn.stop()
+            urn.start()
+            reopened = urn.request("/api/state")[1]
+            require(reopened["status"] == "open" and reopened["total"] == 1,
+                    "Standalone restart did not preserve the existing election and vote")
+            check_group_defaults(reopened, web)
+            require(state_path.read_bytes() == committed_bytes,
+                    "Standalone restart rewrote or reset the existing data file")
+            urn.admin = urn.call("login", {"pin": PIN})["adminToken"]
+            urn.call("close", {}, admin=True)
+            check_counts(urn.call("export", admin=True), {"c1": 1, "c2": 0, "c3": 0, "blank": 0, "nullVote": 0}, 1)
+            require({p.name for p in portable.iterdir()} == {copied_exe.name, "Dados"},
+                    "Standalone app extracted web resources or created auxiliary files beside the EXE")
+            require({p.name for p in urn.data.iterdir()} <= {"urna.json", "urna.lock"},
+                    "Standalone app extracted auxiliary resources into its data folder")
+            require(not list(elsewhere.iterdir()), "Standalone app wrote data to its working directory")
+        finally:
+            urn.stop()
+
+        external_web = root / "explicit web override"
+        shutil.copytree(web, external_web)
+        marker = "<!-- explicit-external-web-directory-test -->"
+        index_path = external_web / "index.html"
+        index_path.write_text(index_path.read_text(encoding="utf-8-sig") + marker, encoding="utf-8")
+        external = Urn(copied_exe, external_web, root / "external test data", cwd=elsewhere)
+        try:
+            external.start()
+            require(marker in external.request("/")[1], "Explicit --web-dir was ignored in favor of embedded resources")
+        finally:
+            external.stop()
+
+        missing_data = root / "data must not be created for missing web"
+        missing = Urn(copied_exe, root / "missing explicit web directory", missing_data, cwd=elsewhere)
+        expect_start_failure(missing, "An invalid explicit web directory did not fail startup")
+        require(not missing_data.exists(), "Invalid explicit web directory created a data folder before failing")
+        (external_web / "style.css").unlink()
+        incomplete_data = root / "data must not be created for incomplete web"
+        incomplete = Urn(copied_exe, external_web, incomplete_data, cwd=elsewhere)
+        expect_start_failure(incomplete, "An explicit web directory missing a required asset did not fail startup")
+        require(not incomplete_data.exists(), "Missing explicit web asset created a data folder before failing")
+    print("STANDALONE SMOKE PASSED: EXE alone, exact embedded assets, default Dados, persisted vote, no extraction, external override and startup validation")
+
+
 def run(exe: Path, web: Path):
     require(exe.is_file(), f"Executable not found: {exe}")
     require((web / "index.html").is_file(), f"Web entry not found: {web}")
+    standalone_smoke(exe, web)
     active = []
     with tempfile.TemporaryDirectory(prefix="urna-integration-") as tmp:
         root = Path(tmp)
@@ -432,6 +530,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--exe", type=Path, default=PROJECT / "dist" / "Urna-Araci-Zebral" / "UrnaEstudantil.exe")
     parser.add_argument("--web-dir", type=Path, default=PROJECT / "src" / "web")
-    parser.add_argument("--metadata-smoke", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--metadata-smoke", action="store_true")
+    mode.add_argument("--standalone-smoke", action="store_true")
     args = parser.parse_args()
-    (metadata_smoke if args.metadata_smoke else run)(args.exe.resolve(), args.web_dir.resolve())
+    operation = metadata_smoke if args.metadata_smoke else standalone_smoke if args.standalone_smoke else run
+    operation(args.exe.resolve(), args.web_dir.resolve())

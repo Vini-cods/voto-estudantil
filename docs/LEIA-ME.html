@@ -17,17 +17,17 @@
 <section class="page">
   <header class="heading"><div class="mark" aria-hidden="true">✓</div><div><div class="eyebrow">Guia da comissão eleitoral • 01</div><h1>Urna Estudantil</h1></div></header>
   <p class="lead">Votação presencial para três candidaturas, em notebooks com Windows 10 ou 11. O programa funciona sem internet e salva os dados no próprio computador.</p>
-  <div class="note"><p><strong>O pendrive distribui o programa. Cada notebook guarda sua própria urna.</strong> Copie a pasta do pacote para o disco local de cada notebook antes de usar. Execute <code>UrnaEstudantil.exe</code> dentro dessa pasta. O aplicativo usa o .NET Framework do Windows e os arquivos web que acompanham o pacote; mantenha todos juntos.</p></div>
+  <div class="note"><p><strong>Basta um arquivo para iniciar: <code>UrnaEstudantil.exe</code>.</strong> As fotos, os logotipos e a interface já estão incorporados. Copie o EXE para uma pasta própria no disco local de cada notebook e abra-o. A tela abre no navegador, sem internet, instalação ou extração. O programa usa o .NET Framework do Windows.</p></div>
   <h2>Preparação em seis passos</h2>
   <ol class="steps">
-    <li><strong>Copie um pacote ainda não iniciado para cada notebook.</strong><span>Use uma pasta local com permissão de gravação. Não execute a votação diretamente no pendrive e não faça uma nova urna copiando uma pasta que já foi iniciada.</span></li>
+    <li><strong>Copie apenas o executável para cada notebook.</strong><span>Crie uma pasta própria no disco local, com permissão de gravação, e copie o EXE original. No primeiro uso, ele cria <code>Dados</code> ao lado. Não leve a pasta <code>Dados</code> de outra urna nem execute a votação diretamente no pendrive.</span></li>
     <li><strong>Abra o executável e defina o PIN administrativo.</strong><span>Na primeira execução, crie um PIN com pelo menos seis dígitos. Guarde-o com a comissão e fora da vista dos alunos. O PIN é necessário para administrar e finalizar.</span></li>
     <li><strong>Identifique a eleição e esta urna.</strong><span>A escola já está configurada como “Araci Zebral Teixeira”. Dê a cada urna um nome diferente, como “Notebook 01 — sala A”. Cada instalação tem sua própria identificação e seu PIN.</span></li>
     <li><strong>Confira as três chapas e as fotos dos grupos.</strong><span>Já estão cadastradas: Conexão — 01, com Julia Oliveira (2º A); Liderança Jovem — 07, com Isabelly M (1º D); Renascer — 10, com Fernanda Santos de Souza (1º D). Todas incluem uma foto do grupo, propostas e integrantes. Preserve os zeros iniciais. Na Comissão, aba “Configuração”, confira e use “Salvar configuração”. Depois use “Exportar configuração” e, nos demais notebooks, “Importar configuração”. Isso compartilha os dados das chapas, escola e título, preservando nome da urna, PIN, identificação e votos locais.</span></li>
-    <li><strong>Organize as turmas e confira a operação.</strong><span>Atribua cada turma a um único notebook. Tenha uma lista de alunos e um responsável para conferir a identidade. Se quiser ensaiar, use uma cópia separada do pacote e reserve cópias intactas para a eleição real.</span></li>
+    <li><strong>Organize as turmas e confira a operação.</strong><span>Atribua cada turma a um único notebook. Tenha uma lista de alunos e um responsável para conferir a identidade. Se quiser ensaiar, copie o EXE para uma pasta separada. Prepare a eleição real em outra pasta, sem os dados do ensaio.</span></li>
     <li><strong>Abra a votação somente depois da conferência.</strong><span>Use “Abrir votação” quando a urna estiver pronta. A configuração passa a valer para os votos reais; mantenha os dados iguais em todas as urnas.</span></li>
   </ol>
-  <div class="note warning"><p><strong>Atenção ao copiar:</strong> a pasta <code>Dados</code> contém o estado da urna. Não a apague, mova, renomeie ou substitua durante a eleição. Não distribua uma pasta já iniciada para outro notebook: isso duplicaria a identificação da urna.</p></div>
+  <div class="note warning"><p><strong>A pasta <code>Dados</code> fica ao lado do EXE e contém o estado da urna.</strong> Não a apague, mova, renomeie ou substitua durante a eleição. Para criar outra urna, copie só o EXE. Para atualizar esta urna na mesma pasta, troque apenas o EXE e preserve <code>Dados</code>.</p></div>
   <footer class="footer"><span>Uso local e supervisionado pela escola</span><span>Preparação • 1 de 4</span></footer>
 </section>
 
@@ -90,8 +90,8 @@
   <table>
     <thead><tr><th>Item</th><th>Para que serve</th></tr></thead>
     <tbody>
-      <tr><td><code>UrnaEstudantil.exe</code></td><td>Inicia o aplicativo no Windows. Abra-o a partir da pasta local da urna.</td></tr>
-      <tr><td>Arquivos web do pacote</td><td>Formam as telas, os estilos e a lógica da interface. Mantenha a estrutura e os nomes originais.</td></tr>
+      <tr><td><code>UrnaEstudantil.exe</code></td><td>Contém o programa, as fotos, os logotipos e a interface. Abra-o na pasta local da urna.</td></tr>
+      <tr><td>ZIP completo opcional</td><td>Reúne manuais, materiais de apoio e fontes. O EXE funciona sozinho.</td></tr>
       <tr><td>Pasta <code>Dados</code></td><td>Guarda a eleição, sua identificação, configuração, contagens e comparecimentos. É a parte crítica para recuperar a urna.</td></tr>
       <tr><td>JSON final de cada urna</td><td>Permite validar e consolidar resultados. Guarde junto dos relatórios finais.</td></tr>
       <tr><td>CSV e PDF</td><td>Permitem conferir, imprimir e arquivar os resultados. O CSV abre no Excel; o PDF é gerado pela impressão.</td></tr>
@@ -102,7 +102,7 @@
   <table>
     <thead><tr><th>Situação</th><th>O que fazer</th></tr></thead>
     <tbody>
-      <tr><td>O programa não abre</td><td>Confirme que a pasta foi copiada inteira para o disco local e que está usando Windows 10 ou 11. Se o Windows ou a política da escola bloquear o executável, peça ao responsável de TI para verificar. Não remova arquivos do pacote.</td></tr>
+      <tr><td>O programa não abre</td><td>Confira se o EXE está numa pasta local com permissão de gravação, em Windows 10 ou 11. Se houver bloqueio do Windows ou da escola, peça ajuda ao responsável de TI. Preserve <code>Dados</code> na mesma pasta.</td></tr>
       <tr><td>Erro ao salvar um voto</td><td>A tela de votação permanece aberta e não deve indicar sucesso. Pare o atendimento, confira espaço livre e permissão de gravação na pasta. Não mande o aluno votar em outra urna sem a comissão verificar o que foi registrado.</td></tr>
       <tr><td>Falta de energia ou fechamento inesperado</td><td>Reabra a mesma instalação e confira o estado preservado. Se o último atendimento não chegou a mostrar “FIM”, verifique o comparecimento antes de liberar outra tentativa. Preserve os arquivos se houver dúvida.</td></tr>
       <tr><td>Arquivo de dados inválido ou corrompido</td><td>O programa não deve apagar os votos nem iniciar uma eleição vazia automaticamente. Pare essa urna, preserve a pasta e procure o responsável técnico. Use um backup validado da mesma urna com cuidado para não perder ou repetir votos posteriores à cópia.</td></tr>
@@ -110,7 +110,7 @@
       <tr><td>PIN esquecido</td><td>Procure a comissão responsável. Não apague <code>Dados</code> para contornar o acesso: isso elimina o estado local da eleição.</td></tr>
     </tbody>
   </table>
-  <div class="note warning"><p><strong>Não reinicie uma eleição para resolver uma falha.</strong> Primeiro preserve o executável, os arquivos web, a pasta <code>Dados</code> e as exportações existentes. Uma urna reserva deve receber uma cópia ainda não iniciada e um nome próprio, com registro da ocorrência pela comissão.</p></div>
+  <div class="note warning"><p><strong>Não reinicie uma eleição para resolver uma falha.</strong> Preserve o executável, a pasta <code>Dados</code> e as exportações existentes. Para uma urna reserva, coloque só o EXE original em uma pasta nova e dê um nome próprio à urna, registrando a ocorrência pela comissão.</p></div>
   <footer class="footer"><span>Sem internet • dados locais por notebook • exportações sob guarda da escola</span><span>Suporte • 4 de 4</span></footer>
 </section>
 </body>

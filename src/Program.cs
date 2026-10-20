@@ -19,6 +19,7 @@ internal static class Program
     private static readonly object Gate = new object();
     private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = 24 * 1024 * 1024, RecursionLimit = 60 };
     private static readonly string[] Choices = { "c1", "c2", "c3", "blank", "nullVote" };
+    private static readonly string[] RequiredAssets = { "index.html", "app.js", "style.css", "favicon.svg", "assets/gresp.png", "assets/simbolo-institucional.png", "assets/chapa-01-grupo.jpeg", "assets/chapa-07-grupo.jpeg", "assets/chapa-10-grupo.jpeg" };
     private static readonly Dictionary<string, DateTime> AdminSessions = new Dictionary<string, DateTime>();
     private static readonly Dictionary<string, Voter> Voters = new Dictionary<string, Voter>();
     private static Dictionary<string, object> State;
@@ -38,7 +39,7 @@ internal static class Program
         try
         {
             string exeDir = AppDomain.CurrentDomain.BaseDirectory;
-            DataDir = Path.Combine(exeDir, "Dados"); WebDir = Path.Combine(exeDir, "web");
+            DataDir = Path.Combine(exeDir, "Dados"); WebDir = null;
             bool browser = true; int requestedPort = 0;
             for (int i = 0; i < args.Length; i++)
             {
@@ -49,7 +50,8 @@ internal static class Program
                 else throw new Exception("Argumento desconhecido: " + args[i]);
             }
             if (requestedPort < 0 || requestedPort > 65535) throw new Exception("Porta inválida.");
-            DataDir = Path.GetFullPath(DataDir); WebDir = Path.GetFullPath(WebDir);
+            DataDir = Path.GetFullPath(DataDir); if (WebDir != null) WebDir = Path.GetFullPath(WebDir);
+            ValidateWebAssets();
             Directory.CreateDirectory(DataDir); StatePath = Path.Combine(DataDir, "urna.json");
             try { InstanceLock = new FileStream(Path.Combine(DataDir, "urna.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
             catch (IOException) { throw new Exception("Esta urna já está aberta para esta pasta Dados. Feche a outra janela antes de continuar."); }
@@ -101,8 +103,33 @@ internal static class Program
     }
     private static string SeedImage(string name)
     {
-        string file = Path.Combine(WebDir, "assets", name);
-        return File.Exists(file) ? "data:image/jpeg;base64," + Convert.ToBase64String(File.ReadAllBytes(file)) : "";
+        return "data:image/jpeg;base64," + Convert.ToBase64String(ReadWebAsset("assets/" + name));
+    }
+    private static void ValidateWebAssets()
+    {
+        foreach (string name in RequiredAssets)
+        {
+            try { if (ReadWebAsset(name).Length == 0) throw new IOException("Arquivo vazio."); }
+            catch (Exception e) { throw new Exception("Interface incompleta: " + name + ". Obtenha ou recompile o executável completo" + (WebDir != null ? " ou confira a pasta indicada por --web-dir" : "") + ". Nenhum dado de votação foi criado ou alterado. Detalhe: " + e.Message); }
+        }
+    }
+    private static byte[] ReadWebAsset(string relative)
+    {
+        if (String.IsNullOrEmpty(relative) || relative[0] == '/' || relative.IndexOf('\\') >= 0 || relative.IndexOf(':') >= 0 || Regex.IsMatch(relative, @"[\x00-\x1f\x7f]")) throw new ApiError(404, "Arquivo não encontrado.");
+        foreach (string segment in relative.Split('/'))
+            if (segment.Length == 0 || segment == "." || segment == ".." || segment.EndsWith(".", StringComparison.Ordinal) || segment.EndsWith(" ", StringComparison.Ordinal) || segment.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) throw new ApiError(404, "Arquivo não encontrado.");
+        if (WebDir != null)
+        {
+            string file = Path.GetFullPath(Path.Combine(WebDir, relative.Replace('/', Path.DirectorySeparatorChar)));
+            string prefix = WebDir.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!file.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || !File.Exists(file)) throw new ApiError(404, "Arquivo não encontrado.");
+            return File.ReadAllBytes(file);
+        }
+        using (Stream resource = typeof(Program).Assembly.GetManifestResourceStream("UrnaWeb/" + relative))
+        {
+            if (resource == null) throw new ApiError(404, "Recurso embutido não encontrado.");
+            using (MemoryStream output = new MemoryStream()) { resource.CopyTo(output); return output.ToArray(); }
+        }
     }
     private static Dictionary<string, object> EmptyCounts() { return D("c1", 0, "c2", 0, "c3", 0, "blank", 0, "nullVote", 0); }
     private static string Now() { return DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture); }
@@ -348,12 +375,11 @@ internal static class Program
             }
         }
         if (r.Method != "GET") throw new ApiError(405, "Método não permitido.");
-        string relative = r.Path == "/" ? "index.html" : Uri.UnescapeDataString(r.Path.TrimStart('/')).Replace('/', Path.DirectorySeparatorChar);
-        string file = Path.GetFullPath(Path.Combine(WebDir, relative)); string prefix = WebDir.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        if (!file.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || !File.Exists(file)) throw new ApiError(404, "Arquivo não encontrado.");
-        string extension = Path.GetExtension(file).ToLowerInvariant();
+        string relative = r.Path == "/" ? "index.html" : Uri.UnescapeDataString(r.Path.Substring(1));
+        byte[] bytes = ReadWebAsset(relative);
+        string extension = Path.GetExtension(relative).ToLowerInvariant();
         string type = extension == ".html" ? "text/html; charset=utf-8" : extension == ".css" ? "text/css; charset=utf-8" : extension == ".js" ? "text/javascript; charset=utf-8" : extension == ".svg" ? "image/svg+xml" : extension == ".png" ? "image/png" : extension == ".jpg" || extension == ".jpeg" ? "image/jpeg" : extension == ".webp" ? "image/webp" : extension == ".json" ? "application/json; charset=utf-8" : extension == ".woff2" ? "font/woff2" : "application/octet-stream";
-        byte[] bytes = extension == ".html" ? Encoding.UTF8.GetBytes(File.ReadAllText(file, Encoding.UTF8).Replace("__CSRF_TOKEN__", Csrf)) : File.ReadAllBytes(file);
+        if (extension == ".html") bytes = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(bytes).Replace("__CSRF_TOKEN__", Csrf));
         return new Reply { Type = type, Data = bytes };
     }
     private static Dictionary<string, object> Consolidate(Dictionary<string, object> input)

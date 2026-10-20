@@ -26,7 +26,10 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'docs\VALIDACAO.md') -Destinatio
 if ($Package) {
     $releaseDirectory = Join-Path $PSScriptRoot 'releases'
     New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
+    $standaloneFile = Join-Path $releaseDirectory 'UrnaEstudantil.exe'
+    Copy-Item -LiteralPath (Join-Path $buildDestination 'UrnaEstudantil.exe') -Destination $standaloneFile -Force
     $releaseFile = Join-Path $releaseDirectory 'Urna-Araci-Zebral.zip'
     Compress-Archive -LiteralPath $buildDestination -DestinationPath $releaseFile -CompressionLevel Optimal -Force
+    Write-Output $standaloneFile
     Write-Output $releaseFile
 }

@@ -1,16 +1,20 @@
 # Voz da Escola — Urna Estudantil
 
-Aplicativo portátil para a eleição do grêmio da escola **Araci Zebral Teixeira**, em notebooks com **Windows 10 ou 11**. Funciona sem internet, com executável em C#/.NET Framework e interface local no navegador. Cada notebook guarda uma urna independente; um pendrive permite distribuir o pacote e reunir os resultados ao final.
+Aplicativo portátil para a eleição do grêmio da escola **Araci Zebral Teixeira**, em notebooks com **Windows 10 ou 11**. Funciona sem internet em um único executável C#/.NET Framework, com interface, fotos e logotipos incorporados. Ele abre a interface local no navegador. Cada notebook guarda uma urna independente; um pendrive permite distribuir o executável e reunir os resultados ao final.
 
 O aluno informa nome e série/turma, digita os dois dígitos da chapa e confirma a escolha. A interface destaca uma foto do grupo de cada chapa, com o nome da representante, propostas e integrantes. A comissão configura a eleição com PIN, encerra a votação e exporta CSV para Excel, JSON para consolidação e relatório para impressão/PDF. O sistema mantém contagens agregadas e uma lista de comparecimento separada, sem relatório de voto por aluno.
 
 ## Usar o aplicativo
 
-Baixe [releases/Urna-Araci-Zebral.zip](releases/Urna-Araci-Zebral.zip), extraia a pasta inteira no disco local de cada notebook e abra `UrnaEstudantil.exe`. Distribua cópias ainda não iniciadas; cada urna deve ter identificação própria. Configure uma urna e use a exportação/importação de configuração para compartilhar nomes, números, fotos e propostas com as demais.
+Baixe [UrnaEstudantil.exe](releases/UrnaEstudantil.exe). Em cada notebook, crie uma pasta própria no disco local, copie apenas esse executável e abra-o. As fotos e a interface já estão incluídas; basta executar o arquivo, sem instalação ou extração.
+
+Na primeira execução, o programa cria a pasta `Dados` ao lado do EXE. Ela guarda o estado dessa urna e deve permanecer ali. Para preparar outro notebook, copie somente o EXE original, sem levar `Dados` de uma urna já iniciada. Ao atualizar o aplicativo na mesma pasta, substitua apenas o EXE e preserve `Dados`.
+
+Configure uma urna e use a exportação/importação de configuração para compartilhar nomes, números, fotos e propostas com as demais. Cada urna mantém sua própria identificação, nome, PIN e votos.
 
 Na tela inicial e nos detalhes da chapa, **Ampliar foto** mostra a imagem inteira do grupo. Use **Voltar à chapa** para retornar.
 
-Consulte o [manual em HTML](docs/LEIA-ME.html) ou o [manual em PDF](docs/Manual-de-uso.pdf) para preparar, operar, finalizar e somar as urnas. A pasta `Dados` criada durante o uso é essencial para preservar os votos e não pertence ao repositório.
+Consulte o [manual em HTML](docs/LEIA-ME.html) ou o [manual em PDF](docs/Manual-de-uso.pdf) para preparar, operar, finalizar e somar as urnas. O [ZIP completo](releases/Urna-Araci-Zebral.zip) é opcional e reúne materiais de apoio, documentação e fontes. Dados de votação não pertencem ao repositório.
 
 ## Chapas cadastradas
 
@@ -28,7 +32,7 @@ node --check src/web/app.js
 python tests/test_urna.py --exe dist/Urna-Araci-Zebral/UrnaEstudantil.exe --web-dir src/web
 ```
 
-`src/Program.cs` e `src/web/` são as fontes oficiais. O comando da raiz compila em `dist/Urna-Araci-Zebral/` e, com `-Package`, gera o pacote distribuível versionado `releases/Urna-Araci-Zebral.zip`. `tests/` contém as verificações; `docs/`, os manuais; e `packaging/`, o iniciador `INICIAR.cmd` e o guia `COMECE-AQUI.txt`. O pacote deve acompanhar as alterações de código e conteúdo.
+`src/Program.cs` e `src/web/` são as fontes oficiais. A compilação incorpora a interface e seus arquivos no executável em `dist/Urna-Araci-Zebral/`. O comando com `-Package` atualiza `releases/UrnaEstudantil.exe` e o ZIP opcional `releases/Urna-Araci-Zebral.zip`. `tests/` contém as verificações; `docs/`, os manuais; e `packaging/`, o iniciador de apoio `INICIAR.cmd` e o guia `COMECE-AQUI.txt`. Os distribuíveis devem acompanhar as alterações de código e conteúdo.
 
 ## Dados e limites
 

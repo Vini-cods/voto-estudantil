@@ -1,9 +1,14 @@
 CODIGO-FONTE E VERIFICACAO
 
 A aplicacao usa C# / .NET Framework e HTML/CSS/JavaScript locais.
-Nao ha servidor externo, banco remoto ou dependencias a baixar.
-Program.cs implementa o servidor restrito ao proprio notebook e a gravacao.
-Os arquivos da interface ficam em ../web/.
+O UrnaEstudantil.exe pronto incorpora interface, fotos e logotipos e abre
+o navegador offline. Basta copiar o EXE para uma pasta propria e executa-lo.
+Nao ha instalacao nem extracao obrigatoria para usar a urna.
+
+Este codigo-fonte acompanha o ZIP opcional de apoio. Program.cs implementa
+o servidor restrito ao proprio notebook e a gravacao. Os arquivos em ../web/
+sao fontes usadas na recompilacao para incorporar a interface ao EXE;
+nao sao necessarios ao lado do executavel pronto para ele funcionar.
 
 Recompilar no Windows, com a urna fechada:
   powershell -File build.ps1 -OutputDirectory ..
@@ -17,8 +22,11 @@ ficticios em pastas temporarias. Nao usam a pasta Dados da urna escolar.
 O Python e o compilador NAO sao necessarios para usar o executavel pronto.
 
 O fechamento da urna e definitivo e nao ha botao de apagar votos.
-Para outra eleicao, utilize uma nova copia limpa do pacote original.
-Preserve integralmente a pasta da eleicao anterior e seus relatorios.
+No primeiro uso, a pasta Dados e criada ao lado do EXE e guarda a urna.
+Para outro notebook ou outra eleicao, coloque so o EXE original em uma
+pasta nova, sem copiar Dados de uma urna iniciada. Ao atualizar na mesma
+pasta, substitua apenas o EXE e preserve Dados. Mantenha a pasta da eleicao
+anterior e seus relatorios.
 
 Os dados locais nao possuem assinatura digital nem criptografia em disco.
 As validacoes conferem estrutura, identidade da eleicao, duplicidades e
