@@ -10,7 +10,7 @@ if (-not $WebDirectory) {
     $WebDirectory = if (Test-Path -LiteralPath $localWebDirectory -PathType Container) { $localWebDirectory } else { Join-Path $PSScriptRoot '..\web' }
 }
 $webRoot = [System.IO.Path]::GetFullPath($WebDirectory)
-$requiredAssets = @('index.html', 'app.js', 'style.css', 'favicon.svg', 'assets/gresp.png', 'assets/simbolo-institucional.png', 'assets/chapa-01-grupo.jpeg', 'assets/chapa-07-grupo.jpeg', 'assets/chapa-10-grupo.jpeg')
+$requiredAssets = @('index.html', 'app.js', 'style.css', 'favicon.svg', 'assets/gresp.png', 'assets/estado-sp.png')
 $resourceArguments = @()
 foreach ($relativePath in $requiredAssets) {
     $assetPath = Join-Path $webRoot $relativePath

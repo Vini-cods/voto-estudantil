@@ -12,14 +12,21 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web.Script.Serialization;
 using System.Diagnostics;
+using System.Reflection;
+
+[assembly: AssemblyTitle("Voz da Escola")]
+[assembly: AssemblyDescription("Urna estudantil offline configurável")]
+[assembly: AssemblyProduct("Voz da Escola")]
+[assembly: AssemblyVersion("2.0.0.0")]
+[assembly: AssemblyFileVersion("2.0.0.0")]
 
 internal static class Program
 {
-    private const int BodyLimit = 12 * 1024 * 1024;
+    private const int BodyLimit = 64 * 1024 * 1024;
+    private const int ImageLimit = 3 * 1024 * 1024;
     private static readonly object Gate = new object();
-    private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = 24 * 1024 * 1024, RecursionLimit = 60 };
-    private static readonly string[] Choices = { "c1", "c2", "c3", "blank", "nullVote" };
-    private static readonly string[] RequiredAssets = { "index.html", "app.js", "style.css", "favicon.svg", "assets/gresp.png", "assets/simbolo-institucional.png", "assets/chapa-01-grupo.jpeg", "assets/chapa-07-grupo.jpeg", "assets/chapa-10-grupo.jpeg" };
+    private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = 64 * 1024 * 1024, RecursionLimit = 60 };
+    private static readonly string[] RequiredAssets = { "index.html", "app.js", "style.css", "favicon.svg", "assets/gresp.png", "assets/estado-sp.png" };
     private static readonly Dictionary<string, DateTime> AdminSessions = new Dictionary<string, DateTime>();
     private static readonly Dictionary<string, Voter> Voters = new Dictionary<string, Voter>();
     private static Dictionary<string, object> State;
@@ -57,16 +64,7 @@ internal static class Program
             if (File.Exists(StatePath))
             {
                 try { State = ParseObject(File.ReadAllText(StatePath, Encoding.UTF8)); ValidateStored(State); }
-                catch (Exception e) { throw new Exception("O arquivo Dados/urna.json está inválido. Os dados foram preservados. Não apague a pasta; preserve os arquivos e procure a comissão. Detalhe: " + e.Message); }
-                if (S(State, "status") == "setup")
-                {
-                    try
-                    {
-                        ValidateCandidates(State, true);
-                        Dictionary<string, object> next = Clone(State); next["status"] = "open"; next["openedAt"] = Now(); next["electionId"] = ElectionId(next); Save(next);
-                    }
-                    catch (Exception e) { throw new Exception("Não foi possível abrir a configuração antiga desta urna. Os dados e as chapas existentes foram preservados; não apague a pasta Dados. Detalhe: " + e.Message); }
-                }
+                catch (Exception e) { throw new Exception("O arquivo Dados/urna.json está inválido. Os dados foram preservados. Não apague a pasta; preserve os arquivos e procure a equipe responsável. Detalhe: " + e.Message); }
             }
             else
             {
@@ -95,25 +93,10 @@ internal static class Program
     private static Dictionary<string, object> NewState()
     {
         List<object> candidates = new List<object>();
-        string[] names = { "Chapa Conexão", "Liderança Jovem", "Renascer" }, numbers = { "01", "07", "10" };
-        for (int i = 1; i <= 3; i++) candidates.Add(D("id", "c" + i, "name", names[i - 1], "number", numbers[i - 1], "portrait", "", "groupPhoto", i == 2 ? SeedImage("chapa-07-grupo.jpeg") : "", "proposals", i == 2 ? "Melhorias nos banheiros.\nCriação de um espaço de apoio feminino, com kits de higiene e auxílio da escola.\nDisponibilização mensal de absorventes para situações de emergência.\nCriação de uma rede de apoio para pessoas com deficiência.\nCriação de um espaço de lazer voltado à inclusão e ao estímulo dos alunos.\nRealização de dinâmicas solidárias para arrecadação de roupas." : "", "members", i == 2 ? "Isabelly M — 1º ano D\nSophia Januario — 1º ano D\nMaria Luiza — 1º ano D\nEnzo Antoni — 2º ano B\nGuilherme — 1º ano G\nKauan — 1º ano C\nLayla Santos — 2º ano C\nNycolas Oliveira — 2º ano F" : "", "representativeName", i == 2 ? "Isabelly M — 1º ano D" : ""));
-        Dictionary<string, object> conexao = Obj(candidates[0]);
-        conexao["groupPhoto"] = SeedImage("chapa-01-grupo.jpeg");
-        conexao["representativeName"] = "Julia Oliveira — 2º ano A";
-        conexao["members"] = "Julia Oliveira — 2º ano A\nJuan Ferreira — 2º ano A\nAna Julia — 2º ano B\nAna Beatriz — 1º ano B\nZaqueu — 2º ano B\nCaique — 2º ano B\nHadassa Nascimento — 1º ano D\nRyan Dantas — 1º ano C";
-        conexao["proposals"] = "Saúde mental e bem-estar.\nFuturo profissional.\nAluno destaque.\nApoio aos alunos.\nMelhorias na escola.\nProjeto ideia do mês.\nCampanha solidária.\nAssembleia dos alunos.";
-        Dictionary<string, object> renascer = Obj(candidates[2]);
-        renascer["groupPhoto"] = SeedImage("chapa-10-grupo.jpeg");
-        renascer["representativeName"] = "Fernanda Santos de Souza — 1º ano D";
-        renascer["members"] = "Fernanda Santos de Souza — 1º ano D\nCaylon — 2º ano D\nGuilherme Ferreira — 2º ano D\nGeovana Almeida — 2º ano B\nPyetro — 2º ano D\nPyetro Wilians — 1º ano A\nGustavo — 1º ano A\nKauany Sonya — 2º ano D";
-        renascer["proposals"] = "Realização de dois interclasses.\nMúsica três vezes por semana.\nJogos.\nShow de talentos.\nFesta de Halloween.\nBaile de primavera.\nPasseio.\nSemana do adolescente.\nSala destaque.\nTrote em uma sexta-feira por mês.";
-        string urnId = Guid.NewGuid().ToString("D"), openedAt = Now();
-        Dictionary<string, object> state = D("stateFormat", "urna-estudantil-state-v1", "urnId", urnId, "electionId", "", "urnName", "Urna " + urnId.Substring(0, 8).ToUpperInvariant(), "school", "Araci Zebral Teixeira", "electionTitle", "Eleição do Grêmio Estudantil 2026", "status", "open", "createdAt", openedAt, "openedAt", openedAt, "closedAt", "", "candidates", candidates, "counts", EmptyCounts(), "participants", new List<object>());
-        ValidateCandidates(state, true); state["electionId"] = ElectionId(state); return state;
-    }
-    private static string SeedImage(string name)
-    {
-        return "data:image/jpeg;base64," + Convert.ToBase64String(ReadWebAsset("assets/" + name));
+        for (int i = 1; i <= 3; i++) candidates.Add(D("id", "c" + i, "name", "", "number", "", "portrait", "", "groupPhoto", "", "proposals", "", "members", "", "representativeName", ""));
+        string urnId = Guid.NewGuid().ToString("D");
+        Dictionary<string, object> state = D("stateFormat", "urna-estudantil-state-v1", "urnId", urnId, "electionId", "", "urnName", "Urna " + urnId.Substring(0, 8).ToUpperInvariant(), "school", "", "schoolLogo", "", "electionTitle", "Eleição do Grêmio Estudantil", "status", "setup", "createdAt", Now(), "openedAt", "", "closedAt", "", "candidates", candidates, "participants", new List<object>());
+        state["counts"] = EmptyCounts(state); return state;
     }
     private static void ValidateWebAssets()
     {
@@ -141,14 +124,28 @@ internal static class Program
             using (MemoryStream output = new MemoryStream()) { resource.CopyTo(output); return output.ToArray(); }
         }
     }
-    private static Dictionary<string, object> EmptyCounts() { return D("c1", 0, "c2", 0, "c3", 0, "blank", 0, "nullVote", 0); }
+    private static List<string> ChoiceKeys(Dictionary<string, object> state)
+    {
+        List<object> candidates = List(state["candidates"]); if (candidates.Count < 2 || candidates.Count > 12) throw new ApiError(400, "Cadastre de 2 a 12 chapas ou candidaturas.");
+        List<string> choices = new List<string>();
+        for (int i = 0; i < candidates.Count; i++) { string id = S(Obj(candidates[i]), "id"); if (id != "c" + (i + 1)) throw new ApiError(400, "Identificação das candidaturas inválida."); choices.Add(id); }
+        choices.Add("blank"); choices.Add("nullVote"); return choices;
+    }
+    private static Dictionary<string, object> EmptyCounts(Dictionary<string, object> state) { Dictionary<string, object> counts = D(); foreach (string key in ChoiceKeys(state)) counts[key] = 0; return counts; }
     private static string Now() { return DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture); }
     private static Dictionary<string, object> D(params object[] kv) { Dictionary<string, object> d = new Dictionary<string, object>(); for (int i = 0; i < kv.Length; i += 2) d.Add((string)kv[i], kv[i + 1]); return d; }
     private static Dictionary<string, object> Obj(object o) { Dictionary<string, object> d = o as Dictionary<string, object>; if (d == null) throw new ApiError(400, "Objeto JSON inválido."); return d; }
     private static Dictionary<string, object> ParseObject(string text) { lock (Json) return Obj(Json.DeserializeObject(text)); }
+    private static Dictionary<string, object> RequestBody(byte[] bytes)
+    {
+        try { return bytes.Length == 0 ? D() : ParseObject(new UTF8Encoding(false, true).GetString(bytes)); }
+        catch (ArgumentException) { throw new ApiError(400, "O corpo da requisição deve conter um objeto JSON válido em UTF-8."); }
+        catch (InvalidOperationException) { throw new ApiError(400, "Objeto JSON inválido ou complexo demais."); }
+    }
     private static string Serialize(object value) { lock (Json) return Json.Serialize(value); }
     private static Dictionary<string, object> Clone(Dictionary<string, object> d) { return ParseObject(Serialize(d)); }
     private static string S(Dictionary<string, object> d, string key) { object v; return d.TryGetValue(key, out v) && v is string ? (string)v : ""; }
+    private static string InputText(Dictionary<string, object> d, string key) { object value = Get(d, key); if (value == null) return ""; if (!(value is string)) throw new ApiError(400, "O campo " + key + " deve conter texto."); return (string)value; }
     private static object Get(Dictionary<string, object> d, string key) { object v; return d.TryGetValue(key, out v) ? v : null; }
     private static List<object> List(object value) { IEnumerable e = value as IEnumerable; if (e == null || value is string || value is IDictionary) throw new ApiError(400, "Lista JSON inválida."); List<object> a = new List<object>(); foreach (object x in e) a.Add(x); return a; }
     private static int Integer(object value)
@@ -198,8 +195,8 @@ internal static class Program
     private static int Total(Dictionary<string, object> state)
     {
         Dictionary<string, object> counts = Obj(state["counts"]); int total = 0;
-        foreach (string k in Choices) total = checked(total + Integer(Get(counts, k)));
-        if (counts.Count != 5) throw new ApiError(400, "O conjunto de contagens é inválido.");
+        List<string> choices = ChoiceKeys(state); foreach (string k in choices) total = checked(total + Integer(Get(counts, k)));
+        if (counts.Count != choices.Count) throw new ApiError(400, "O conjunto de contagens é inválido.");
         return total;
     }
     private static void SortParticipants(List<object> p)
@@ -229,18 +226,19 @@ internal static class Program
     }
     private static void ValidateCandidates(Dictionary<string, object> s, bool requireFull)
     {
-        List<object> c = List(s["candidates"]); if (c.Count != 3) throw new ApiError(400, "Cadastre exatamente três candidatas.");
+        List<object> c = List(s["candidates"]); ChoiceKeys(s);
         HashSet<string> numbers = new HashSet<string>();
-        for (int i = 0; i < 3; i++)
+        Clean(InputText(s, "school"), 160); Clean(InputText(s, "electionTitle"), 160); Clean(InputText(s, "urnName"), 80);
+        for (int i = 0; i < c.Count; i++)
         {
-            Dictionary<string, object> candidate = Obj(c[i]); string number = S(candidate, "number"), name = S(candidate, "name");
-            ProposalText(S(candidate, "proposals"));
-            ProposalText(S(candidate, "members")); Clean(S(candidate, "representativeName"), 120);
-            if (S(candidate, "id") != "c" + (i + 1)) throw new ApiError(400, "Identificação das candidatas inválida.");
-            if (number.Length > 0 && (!Regex.IsMatch(number, @"^[0-9]{2}$") || !numbers.Add(number))) throw new ApiError(400, "Os números das candidatas devem ter dois algarismos e ser diferentes.");
-            if (requireFull && (name.Length < 2 || number.Length != 2)) throw new ApiError(400, "Preencha o nome e o número de cada uma das três candidatas.");
+            Dictionary<string, object> candidate = Obj(c[i]); string number = InputText(candidate, "number"), name = InputText(candidate, "name");
+            name = Clean(name, 120); ProposalText(InputText(candidate, "proposals"));
+            ProposalText(InputText(candidate, "members")); Clean(InputText(candidate, "representativeName"), 120);
+            if (S(candidate, "id") != "c" + (i + 1)) throw new ApiError(400, "Identificação das candidaturas inválida.");
+            if (number.Length > 0 && (!Regex.IsMatch(number, @"^[0-9]{2}$") || !numbers.Add(number))) throw new ApiError(400, "Os números das candidaturas devem ter dois algarismos e ser diferentes.");
+            if (requireFull && (name.Length < 2 || number.Length != 2)) throw new ApiError(400, "Preencha o nome e o número de todas as chapas ou candidaturas.");
         }
-        if (requireFull && (S(s, "school").Length < 2 || S(s, "electionTitle").Length < 2 || S(s, "urnName").Length < 2)) throw new ApiError(400, "Preencha escola, título da eleição e identificação desta urna.");
+        if (requireFull && (Clean(S(s, "school"), 160).Length < 2 || Clean(S(s, "electionTitle"), 160).Length < 2 || Clean(S(s, "urnName"), 80).Length < 2)) throw new ApiError(400, "Preencha escola, título da eleição e identificação desta urna.");
     }
     private static string ElectionId(Dictionary<string, object> s)
     {
@@ -250,6 +248,30 @@ internal static class Program
         using (SHA256 hash = SHA256.Create()) { byte[] bytes = hash.ComputeHash(Encoding.UTF8.GetBytes(canonical.ToString())); StringBuilder b = new StringBuilder(); foreach (byte x in bytes) b.Append(x.ToString("x2")); return b.ToString(); }
     }
     private static void AppendCanonical(StringBuilder b, string s) { s = Clean(s, 200); b.Append(s.Length.ToString(CultureInfo.InvariantCulture)).Append(':').Append(s).Append('\n'); }
+    private static string ImageValue(Dictionary<string, object> input, string key)
+    {
+        string value = InputText(input, key); if (value.Length == 0) return "";
+        if (value.Length > ((ImageLimit + 2) / 3) * 4 + 64 || !Regex.IsMatch(value, @"^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$")) throw new ApiError(400, "Use uma imagem PNG, JPEG ou WebP de até 3 MB.");
+        int comma = value.IndexOf(','); byte[] bytes;
+        try { bytes = Convert.FromBase64String(value.Substring(comma + 1)); } catch { throw new ApiError(400, "Imagem inválida."); }
+        if (bytes.Length == 0 || bytes.Length > ImageLimit) throw new ApiError(400, "Use uma imagem de até 3 MB.");
+        bool png = value.StartsWith("data:image/png;", StringComparison.Ordinal) && bytes.Length >= 8 && bytes[0] == 137 && bytes[1] == 80 && bytes[2] == 78 && bytes[3] == 71 && bytes[4] == 13 && bytes[5] == 10 && bytes[6] == 26 && bytes[7] == 10;
+        bool jpeg = value.StartsWith("data:image/jpeg;", StringComparison.Ordinal) && bytes.Length >= 3 && bytes[0] == 255 && bytes[1] == 216 && bytes[2] == 255;
+        bool webp = value.StartsWith("data:image/webp;", StringComparison.Ordinal) && bytes.Length >= 12 && Encoding.ASCII.GetString(bytes, 0, 4) == "RIFF" && Encoding.ASCII.GetString(bytes, 8, 4) == "WEBP";
+        if (!png && !jpeg && !webp) throw new ApiError(400, "O conteúdo da imagem não corresponde ao formato informado.");
+        return value;
+    }
+    private static void Configure(Dictionary<string, object> next, Dictionary<string, object> input)
+    {
+        next["school"] = Clean(InputText(input, "school"), 160); next["electionTitle"] = Clean(InputText(input, "electionTitle"), 160); next["urnName"] = Clean(InputText(input, "urnName"), 80); next["schoolLogo"] = ImageValue(input, "schoolLogo");
+        List<object> source = List(Get(input, "candidates")), candidates = new List<object>(); if (source.Count < 2 || source.Count > 12) throw new ApiError(400, "Cadastre de 2 a 12 chapas ou candidaturas.");
+        for (int i = 0; i < source.Count; i++)
+        {
+            Dictionary<string, object> c = Obj(source[i]); if (S(c, "id") != "c" + (i + 1)) throw new ApiError(400, "Ordem das candidaturas inválida.");
+            candidates.Add(D("id", "c" + (i + 1), "name", Clean(InputText(c, "name"), 120), "number", Clean(InputText(c, "number"), 2), "portrait", "", "groupPhoto", ImageValue(c, "groupPhoto"), "proposals", ProposalText(InputText(c, "proposals")), "members", ProposalText(InputText(c, "members")), "representativeName", Clean(InputText(c, "representativeName"), 120)));
+        }
+        next["candidates"] = candidates; next["counts"] = EmptyCounts(next); next["electionId"] = ""; next["openedAt"] = ""; next["closedAt"] = ""; ValidateCandidates(next, false);
+    }
     private static List<object> DisplayCandidates()
     {
         List<object> candidates = new List<object>();
@@ -258,11 +280,11 @@ internal static class Program
     }
     private static Dictionary<string, object> PublicState()
     {
-        return D("urnId", State["urnId"], "electionId", State["electionId"], "urnName", State["urnName"], "school", State["school"], "electionTitle", State["electionTitle"], "status", State["status"], "configured", true, "candidates", DisplayCandidates(), "total", List(State["participants"]).Count, "csrfToken", Csrf);
+        return D("urnId", State["urnId"], "electionId", State["electionId"], "urnName", State["urnName"], "school", State["school"], "schoolLogo", S(State, "schoolLogo"), "electionTitle", State["electionTitle"], "status", State["status"], "configured", S(State, "status") != "setup", "candidates", DisplayCandidates(), "total", List(State["participants"]).Count, "csrfToken", Csrf);
     }
     private static Dictionary<string, object> AdminState()
     {
-        Dictionary<string, object> d = Clone(State); d.Remove("credentials"); d["candidates"] = DisplayCandidates(); d["configured"] = true; d["total"] = Total(State);
+        Dictionary<string, object> d = Clone(State); d.Remove("credentials"); d["schoolLogo"] = S(State, "schoolLogo"); d["candidates"] = DisplayCandidates(); d["configured"] = S(State, "status") != "setup"; d["total"] = Total(State);
         // Live per-choice totals and names together permit differential vote inference.
         if (S(State, "status") == "open") { d.Remove("counts"); d.Remove("participants"); }
         return d;
@@ -271,10 +293,11 @@ internal static class Program
     private static void NeedAdmin(Request r)
     {
         string token; DateTime expiry;
-        if (!r.Headers.TryGetValue("X-Admin-Token", out token) || !AdminSessions.TryGetValue(token, out expiry) || expiry < DateTime.UtcNow) throw new ApiError(401, "Reabra o painel de Resultados para continuar.");
+        if (!r.Headers.TryGetValue("X-Admin-Token", out token) || !AdminSessions.TryGetValue(token, out expiry) || expiry < DateTime.UtcNow) throw new ApiError(401, "Reabra o painel da urna para continuar.");
         AdminSessions[token] = DateTime.UtcNow.AddHours(8);
     }
     private static void NeedOpen() { if (S(State, "status") != "open") throw new ApiError(409, "A votação não está aberta."); }
+    private static void NeedSetup() { if (S(State, "status") != "setup" || Total(State) != 0) throw new ApiError(409, "A configuração está bloqueada porque esta urna já foi aberta."); }
     private static Dictionary<string, object> Batch(Dictionary<string, object> s)
     {
         List<object> people = List(s["participants"]); SortParticipants(people);
@@ -294,14 +317,19 @@ internal static class Program
                 if (r.Method == "POST")
                 {
                     string csrf; if (!r.Headers.TryGetValue("X-Urna-Token", out csrf) || csrf != Csrf) throw new ApiError(403, "Recarregue a página desta urna e tente novamente.");
-                    body = r.Body.Length == 0 ? D() : ParseObject(new UTF8Encoding(false, true).GetString(r.Body));
+                    body = RequestBody(r.Body);
                 }
                 if (r.Method == "POST" && r.Path == "/api/admin/access") return AsJson(D("adminToken", NewAdminSession()));
-                if (r.Method == "POST" && (r.Path == "/api/admin/setup" || r.Path == "/api/admin/login" || r.Path == "/api/admin/config" || r.Path == "/api/admin/open")) throw new ApiError(409, "Esta urna já vem pronta para votar. Não há senha nem etapa de preparação.");
+                if (r.Method == "POST" && (r.Path == "/api/admin/setup" || r.Path == "/api/admin/login")) throw new ApiError(409, "Esta urna não utiliza senha. Abra o painel de configuração ou de resultados.");
                 if (r.Path.StartsWith("/api/admin/", StringComparison.Ordinal))
                 {
                     NeedAdmin(r);
                     if (r.Method == "GET" && r.Path == "/api/admin/state") return AsJson(AdminState());
+                    if (r.Method == "POST" && r.Path == "/api/admin/config") { NeedSetup(); Dictionary<string, object> next = Clone(State); Configure(next, body); Save(next); return AsJson(AdminState()); }
+                    if (r.Method == "POST" && r.Path == "/api/admin/open")
+                    {
+                        NeedSetup(); ValidateCandidates(State, true); Dictionary<string, object> next = Clone(State); next["status"] = "open"; next["openedAt"] = Now(); next["electionId"] = ElectionId(next); Save(next); return AsJson(PublicState());
+                    }
                     if (r.Method == "POST" && r.Path == "/api/admin/close")
                     {
                         NeedOpen(); Dictionary<string, object> next = Clone(State); next["status"] = "closed"; next["closedAt"] = Now(); Save(next); Voters.Clear(); return AsJson(AdminState());
@@ -325,7 +353,7 @@ internal static class Program
                     NeedOpen(); string name = Clean(S(body, "name"), 120), grade = Clean(S(body, "grade"), 60);
                     if (name.Length < 2 || !Regex.IsMatch(name, @"\p{L}") || grade.Length == 0) throw new ApiError(400, "Informe o nome completo e a série do aluno.");
                     string id = Identity(name, grade);
-                    foreach (object item in List(State["participants"])) { Dictionary<string, object> p = Obj(item); if (Identity(S(p, "name"), S(p, "grade")) == id) throw new ApiError(409, "Este nome e série já registraram participação nesta urna. Procure a comissão."); }
+                    foreach (object item in List(State["participants"])) { Dictionary<string, object> p = Obj(item); if (Identity(S(p, "name"), S(p, "grade")) == id) throw new ApiError(409, "Este nome e série já registraram participação nesta urna. Procure a equipe responsável."); }
                     List<string> expired = new List<string>(); foreach (KeyValuePair<string, Voter> pair in Voters) if (pair.Value.Expires < DateTime.UtcNow) expired.Add(pair.Key); foreach (string key in expired) Voters.Remove(key);
                     string token = RandomToken(); Voters[token] = new Voter { Name = name, Grade = grade, Expires = DateTime.UtcNow.AddMinutes(10) }; return AsJson(D("voterToken", token));
                 }
@@ -333,7 +361,7 @@ internal static class Program
                 {
                     NeedOpen(); string token = S(body, "voterToken"), choice = S(body, "choice"); Voter voter;
                     if (!Voters.TryGetValue(token, out voter) || voter.Expires < DateTime.UtcNow) throw new ApiError(409, "A identificação expirou ou este voto já foi confirmado. Volte ao início.");
-                    if (Array.IndexOf(Choices, choice) < 0) throw new ApiError(400, "Opção de voto inválida.");
+                    if (!ChoiceKeys(State).Contains(choice)) throw new ApiError(400, "Opção de voto inválida.");
                     List<object> people = List(State["participants"]); string id = Identity(voter.Name, voter.Grade);
                     foreach (object item in people) { Dictionary<string, object> p = Obj(item); if (Identity(S(p, "name"), S(p, "grade")) == id) { Voters.Remove(token); throw new ApiError(409, "Este aluno já registrou participação nesta urna."); } }
                     Dictionary<string, object> next = Clone(State), counts = Obj(next["counts"]); counts[choice] = checked(Integer(counts[choice]) + 1); people = List(next["participants"]); people.Add(D("name", voter.Name, "grade", voter.Grade)); SortParticipants(people); next["participants"] = people;
@@ -353,17 +381,17 @@ internal static class Program
     private static Dictionary<string, object> Consolidate(Dictionary<string, object> input)
     {
         List<object> batches = List(Get(input, "batches")); if (batches.Count < 1 || batches.Count > 300) throw new ApiError(400, "Selecione de 1 a 300 arquivos de resultados.");
-        Dictionary<string, object> first = null, counts = EmptyCounts(); List<object> allPeople = new List<object>(), urns = new List<object>(); HashSet<string> urnIds = new HashSet<string>(), peopleIds = new HashSet<string>();
+        Dictionary<string, object> first = null, counts = null; List<object> allPeople = new List<object>(), urns = new List<object>(); HashSet<string> urnIds = new HashSet<string>(), peopleIds = new HashSet<string>();
         foreach (object item in batches)
         {
             Dictionary<string, object> b = Obj(item); if (S(b, "format") != "urna-estudantil-v1" || S(b, "status") != "closed") throw new ApiError(400, "Use somente arquivos JSON de urnas finalizadas.");
             Guid guid; if (!Guid.TryParse(S(b, "urnId"), out guid) || !urnIds.Add(guid.ToString("D"))) throw new ApiError(409, "Há um arquivo repetido da mesma urna. Cada urna deve aparecer apenas uma vez.");
             ValidateCandidates(b, true); if (S(b, "electionId") != ElectionId(b)) throw new ApiError(400, "A configuração de um arquivo não corresponde à identificação da eleição.");
-            if (first == null) first = b; else if (S(first, "electionId") != S(b, "electionId")) throw new ApiError(409, "Os arquivos pertencem a eleições ou candidatas diferentes. Use a mesma configuração em todos os notebooks.");
+            if (first == null) { first = b; counts = EmptyCounts(b); } else if (S(first, "electionId") != S(b, "electionId")) throw new ApiError(409, "Os arquivos pertencem a eleições ou candidatas diferentes. Use a mesma configuração em todos os notebooks.");
             CheckParticipants(b); int total = Total(b); if (Integer(Get(b, "total")) != total) throw new ApiError(400, "Total declarado incorreto em um arquivo.");
             if (S(b, "openedAt").Length == 0 || S(b, "closedAt").Length == 0) throw new ApiError(400, "Arquivo sem registro de abertura ou fechamento.");
-            foreach (object person in List(b["participants"])) { Dictionary<string, object> p = Obj(person); if (!peopleIds.Add(Identity(S(p, "name"), S(p, "grade")))) throw new ApiError(409, "Foi encontrado o mesmo nome e série em mais de uma urna. A soma foi bloqueada; a comissão deve conferir os participantes. O sigilo impede identificar ou excluir o voto desse aluno."); allPeople.Add(D("name", S(p, "name"), "grade", S(p, "grade"))); }
-            Dictionary<string, object> local = Obj(b["counts"]); foreach (string choice in Choices) counts[choice] = checked(Integer(counts[choice]) + Integer(local[choice]));
+            foreach (object person in List(b["participants"])) { Dictionary<string, object> p = Obj(person); if (!peopleIds.Add(Identity(S(p, "name"), S(p, "grade")))) throw new ApiError(409, "Foi encontrado o mesmo nome e série em mais de uma urna. A soma foi bloqueada; a equipe responsável deve conferir os participantes. O sigilo impede identificar ou excluir o voto desse aluno."); allPeople.Add(D("name", S(p, "name"), "grade", S(p, "grade"))); }
+            Dictionary<string, object> local = Obj(b["counts"]); foreach (string choice in ChoiceKeys(b)) counts[choice] = checked(Integer(counts[choice]) + Integer(local[choice]));
             urns.Add(D("urnId", b["urnId"], "urnName", b["urnName"], "total", total, "closedAt", b["closedAt"]));
         }
         SortParticipants(allPeople);
@@ -396,7 +424,7 @@ internal static class Program
                 client.ReceiveTimeout = 15000; client.SendTimeout = 15000; client.NoDelay = true; NetworkStream stream = client.GetStream(); Reply reply;
                 try { Request request = ReadRequest(stream); CheckRequest(request); reply = Route(request); }
                 catch (ApiError e) { reply = AsJson(D("error", e.Message)); reply.Code = e.Code; }
-                catch (Exception e) { Console.Error.WriteLine("Falha: " + e.GetType().Name + ": " + e.Message); reply = AsJson(D("error", "Não foi possível concluir a operação. Nenhum voto foi confirmado sem ser salvo. Confira o espaço livre, preserve a pasta Dados e procure a comissão.")); reply.Code = 500; }
+                catch (Exception e) { Console.Error.WriteLine("Falha: " + e.GetType().Name + ": " + e.Message); reply = AsJson(D("error", "Não foi possível concluir a operação. Nenhum voto foi confirmado sem ser salvo. Confira o espaço livre, preserve a pasta Dados e procure a equipe responsável.")); reply.Code = 500; }
                 string status = reply.Code == 200 ? "OK" : reply.Code == 400 ? "Bad Request" : reply.Code == 401 ? "Unauthorized" : reply.Code == 403 ? "Forbidden" : reply.Code == 404 ? "Not Found" : reply.Code == 405 ? "Method Not Allowed" : reply.Code == 409 ? "Conflict" : reply.Code == 413 ? "Payload Too Large" : reply.Code == 429 ? "Too Many Requests" : "Internal Server Error";
                 string headers = "HTTP/1.1 " + reply.Code + " " + status + "\r\nContent-Type: " + reply.Type + "\r\nContent-Length: " + reply.Data.Length.ToString(CultureInfo.InvariantCulture) + "\r\nConnection: close\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: no-referrer\r\nX-Frame-Options: DENY\r\nContent-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'\r\n";
                 if (reply.FileName != null) headers += "Content-Disposition: attachment; filename=\"" + reply.FileName + "\"\r\n";

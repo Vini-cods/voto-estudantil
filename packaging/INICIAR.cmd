@@ -1,5 +1,5 @@
 @echo off
-title Urna Estudantil - Araci Zebral Teixeira
+title Voz da Escola - Urna Estudantil
 cd /d "%~dp0"
 "%~dp0UrnaEstudantil.exe"
 if errorlevel 1 (

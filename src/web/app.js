@@ -2,27 +2,25 @@
 const $ = (s, r = document) => r.querySelector(s);
 const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icons = {
-  urn:'<path d="M5 10h14v11H5z"/><path d="m8 7 3-5 8 5-3 5M9 15h6"/>',
+  urn:'<path d="M4 10h16v11H4zM8 14h8"/><path d="m8 7 3-5 8 5-3 5"/>',
   arrow:'<path d="M4 12h15m-6-6 6 6-6 6"/>',
   lock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>',
-  check:'<path d="m5 12 4 4L19 6"/>',
-  close:'<path d="m6 6 12 12M18 6 6 18"/>',
+  check:'<path d="m5 12 4 4L19 6"/>', close:'<path d="m6 6 12 12M18 6 6 18"/>',
   expand:'<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>',
   group:'<circle cx="12" cy="8" r="3"/><path d="M6 21v-3a6 6 0 0 1 12 0v3M5 5a3 3 0 0 0 0 6m14-6a3 3 0 0 1 0 6M1 20v-3a4 4 0 0 1 3-4m19 7v-3a4 4 0 0 0-3-4"/>',
   user:'<circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>',
   download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
+  upload:'<path d="M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5"/>',
   print:'<path d="M7 7V2h10v5M7 17H3V8h18v9h-4M7 14h10v8H7zM17 11h1"/>',
   info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/>',
   back:'<path d="M20 12H5m6-6-6 6 6 6"/>',
-  shield:'<path d="m12 2 8 3v6c0 5-8 11-8 11S4 16 4 11V5z"/><path d="m8 11 3 3 5-6"/>'
+  shield:'<path d="m12 2 8 3v6c0 5-8 11-8 11S4 16 4 11V5z"/><path d="m8 11 3 3 5-6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', edit:'<path d="m16 3 5 5-12 12H4v-5zM13 6l5 5"/>',
+  trash:'<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>',
+  spark:'<path d="m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/>'
 };
 const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.info}</svg>`;
-const state = {data:null,admin:null,adminData:null,adminTab:'results',csrf:$('meta[name=urna-token]').content,route:'home',voter:null,digits:'',blank:false,saving:false,batches:[],merged:null,toastTimer:null,finishTimer:null};
-const defaults = [
-  {id:'c1',name:'Chapa Conexão',number:'01',groupPhoto:''},
-  {id:'c2',name:'Liderança Jovem',number:'07',groupPhoto:''},
-  {id:'c3',name:'Renascer',number:'10',groupPhoto:''}
-];
+const state = {data:null,admin:null,adminData:null,adminTab:'results',csrf:$('meta[name=urna-token]').content,route:'home',voter:null,digits:'',blank:false,saving:false,batches:[],merged:null,toastTimer:null,finishTimer:null,draft:null,step:0,selected:0,dirty:false,configBusy:false,photoBusy:false};
 async function api(path, body, admin = false) {
   const headers = {};
   if (body !== undefined) { headers['Content-Type']='application/json'; headers['X-Urna-Token']=state.csrf; }
@@ -38,45 +36,139 @@ function toast(message, error=false) {
   state.toastTimer=setTimeout(()=>{el.className='';},error?8500:5000);
 }
 async function refresh() { state.data=await api('state'); if(state.data.csrfToken)state.csrf=state.data.csrfToken; }
-function institutionalLogos(){return '<div class="institutional-logos" aria-label="Símbolos institucionais"><img class="logo-gresp" src="/assets/gresp.png" alt="GRESP — Grêmio Estudantil Paulista"><img class="logo-institucional" src="/assets/simbolo-institucional.png" alt="Símbolo institucional enviado pela escola"></div>';}
-function brand() { return `<div class="brand"><span class="brand-icon">${icon('urn')}</span><div class="brand-text"><strong>Voz da Escola</strong><small>Urna estudantil</small></div>${institutionalLogos()}</div>`; }
+function institutionalLogos(){return '<div class="institutional-logos" aria-label="Símbolos institucionais"><img class="logo-gresp" src="/assets/gresp.png" alt="GRESP — Grêmio Estudantil Paulista"><img class="logo-sp" src="/assets/estado-sp.png" alt="Governo do Estado de São Paulo"></div>';}
+function brand() { return `<a class="brand" href="#" data-action="brand-home" aria-label="Voz da Escola, início"><span class="brand-icon">${icon('urn')}</span><span class="brand-text"><strong>Voz da Escola<span class="brand-dot">.</span></strong><small>Participação que transforma</small></span></a>`; }
+function imageSource(src) { return /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(src||''); }
 function photo(candidate) {
-  const src=candidate.groupPhoto;
-  if(src && /^data:image\/(png|jpeg|webp);base64,/.test(src)) return `<img src="${esc(src)}" alt="Grupo da ${esc(candidate.name)}">`;
-  return `<div class="photo-placeholder">${icon('group')}<span>Foto do grupo em breve</span></div>`;
+  if(imageSource(candidate.groupPhoto)) return `<img src="${esc(candidate.groupPhoto)}" alt="Foto de ${esc(candidate.name||'candidatura')}">`;
+  return `<div class="photo-placeholder">${icon('group')}<span>${candidate.name?'Conheça esta candidatura':'A próxima ideia começa aqui'}</span><small>Vozes que representam a escola</small></div>`;
 }
-function total(counts) { return ['c1','c2','c3','blank','nullVote'].reduce((sum,k)=>sum+Number((counts||{})[k]||0),0); }
+function schoolMark(d) { return imageSource(d.schoolLogo)?`<img class="school-logo" src="${esc(d.schoolLogo)}" alt="Logo da escola">`:''; }
+function total(counts) { return Object.values(counts||{}).reduce((sum,n)=>sum+Number(n||0),0); }
 function countPublic() { return Number(state.data.total == null ? (state.data.participantCount||0) : state.data.total); }
 function home() {
+  if(state.data.status==='setup'){if(!state.draft)state.draft=configuration(state.data);setup();return;}
   state.route='home';state.voter=null;state.digits='';state.blank=false;
-  const d=state.data,candidates=d.candidates || defaults,open=d.status==='open',closed=d.status==='closed';
+  const d=state.data,candidates=d.candidates||[],open=d.status==='open',closed=d.status==='closed';
   $('#app').innerHTML=`<main class="shell">
-    <header class="topbar">${brand()}<div class="top-actions"><span class="status">Funciona sem internet</span><button class="text-btn" data-action="fullscreen" aria-label="Tela cheia">${icon('expand')} Tela cheia</button></div></header>
-    <section class="hero"><div><div class="eyebrow">${esc(d.school||'Araci Zebral Teixeira')}</div><h1>Sua voz.<br><em>O futuro da escola.</em></h1><p>Escolha quem vai representar os estudantes.<br>Conheça as chapas, identifique-se e faça seu voto valer.</p></div>
-    <aside class="intro-card">${icon('urn').replace('<svg','<svg class="stamp"')}<h3>Participar é simples.</h3><ol class="steps"><li><span class="step-num">01</span> Informe seu nome completo e sua turma.</li><li><span class="step-num">02</span> Digite o número da chapa na urna.</li><li><span class="step-num">03</span> Confira as fotos e confirme seu voto.</li></ol></aside></section>
-    <div class="section-line"><h2>As chapas desta eleição</h2><span>Grêmio estudantil · 2026</span></div>
-    <section class="candidates" aria-label="Chapas candidatas">${candidates.map((c,i)=>`<article class="candidate-card"><button class="group-photo photo-button" type="button" data-action="enlarge-photo" data-value="${esc(c.id)}" aria-label="Ampliar foto da ${esc(c.name)}">${photo(c)}<span class="photo-zoom-label">${icon('expand')} Ampliar foto</span></button><div class="candidate-meta"><div><small>Chapa ${esc(c.number||'—')}</small><h3>${esc(c.name||'Nome a definir')}</h3><button class="candidate-link" data-action="candidate-details" data-value="${esc(c.id)}" aria-label="Conhecer ${esc(c.name)}">Conhecer a chapa ${icon('arrow')}</button></div><span class="number-badge" aria-label="Número ${esc(c.number)}">${esc(c.number||'—')}</span></div></article>`).join('')}</section>
-    <section class="start-panel"><div><h2>${closed?'A votação foi encerrada.':'Tudo pronto para o seu voto?'}</h2><p>${closed?'Os resultados desta urna estão disponíveis para exportação.':'Tenha seu nome completo e sua série/turma em mãos.'}</p></div><button class="btn lime" data-action="identify" ${open?'':'disabled'}>${icon('user')} Identificar e votar ${icon('arrow')}</button></section>
-    <footer class="footer"><span class="footer-info">${icon('shield')} Voto sigiloso · identificação separada da apuração</span><div class="footer-actions"><span>${esc(d.urnName||'Urna')}</span><button class="text-btn" data-action="finish">${closed?'Ver resultados':'Finalizar votação'} ${icon('arrow')}</button></div></footer>
+    <header class="topbar">${brand()}<div class="top-actions"><span class="status"><i></i> Sem internet, com participação</span><button class="icon-btn" data-action="fullscreen" aria-label="Tela cheia">${icon('expand')}</button></div></header>
+    <section class="hero"><div class="hero-copy"><div class="school-kicker">${schoolMark(d)}<span>${esc(d.school)}</span></div><span class="eyebrow">${esc(d.electionTitle)}</span><h1>A sua voz faz<br><em>a escola acontecer.</em></h1><p>Conheça as ideias, escolha seus representantes<br class="desktop-break"> e participe do próximo capítulo da sua escola.</p><button class="btn primary large" data-action="${closed?'finish':'identify'}">${icon(closed?'check':'urn')} ${closed?'Ver resultados':'Quero votar'} ${icon('arrow')}</button><span class="hero-caption">${icon('shield')} Voto sigiloso. Participação registrada.</span></div><aside class="hero-visual" aria-label="Etapas da votação"><div class="visual-orbit orbit-one"></div><div class="visual-orbit orbit-two"></div><span class="visual-spark">${icon('spark')}</span><div class="visual-ballot">${icon('urn')}<span>O futuro tem<br><strong>a sua escolha.</strong></span><small>GRÊMIO ESTUDANTIL</small></div><div class="floating-chip chip-top"><span>01</span> Identifique-se</div><div class="floating-chip chip-bottom"><span>02</span> Escolha. Confira. Confirme.</div></aside></section>
+    <div class="section-line"><div><span class="eyebrow">Ideias para ir além</span><h2>Quem quer representar você</h2></div><span class="count-pill">${candidates.length} candidaturas</span></div>
+    <section class="candidates" aria-label="Candidaturas">${candidates.map((c,i)=>`<article class="candidate-card tone-${i%3}"><button class="group-photo photo-button" type="button" data-action="enlarge-photo" data-value="${esc(c.id)}" aria-label="Ampliar foto de ${esc(c.name)}">${photo(c)}<span class="photo-zoom-label">${icon('expand')} Ampliar</span></button><div class="candidate-meta"><div><small>CHAPA / CANDIDATURA</small><h3>${esc(c.name)}</h3>${c.representativeName?`<p>${esc(c.representativeName)}</p>`:''}</div><span class="number-badge" aria-label="Número ${esc(c.number)}">${esc(c.number)}</span></div><button class="candidate-link" data-action="candidate-details" data-value="${esc(c.id)}">Conhecer propostas e equipe ${icon('arrow')}</button></article>`).join('')}</section>
+    <section class="start-panel"><div><span class="eyebrow">Cada participação importa</span><h2>${closed?'A escolha foi feita.':'Sua vez de fazer parte.'}</h2><p>${closed?'A apuração e os arquivos desta eleição estão disponíveis.':'Para começar, você só precisa do seu nome e da sua turma.'}</p></div><button class="btn white" data-action="${open?'identify':'finish'}">${open?'Identificar e votar':'Ver resultados'} ${icon('arrow')}</button></section>
+    <footer class="footer"><div>${institutionalLogos()}<p>Voz da Escola · Urna estudantil offline</p></div><div class="footer-actions"><span>${esc(d.urnName)}</span><button class="text-btn" data-action="finish">${closed?'Ver resultados':'Finalizar votação'} ${icon('arrow')}</button></div></footer>
   </main>`;
   window.scrollTo(0,0);
 }
+function configuration(d) {
+  return {school:d.school||'',electionTitle:d.electionTitle||'Eleição do Grêmio Estudantil',urnName:d.urnName||'',schoolLogo:d.schoolLogo||'',candidates:(d.candidates||[]).map((c,i)=>({id:'c'+(i+1),name:c.name||'',number:c.number||'',groupPhoto:c.groupPhoto||'',representativeName:c.representativeName||'',proposals:c.proposals||'',members:c.members||''}))};
+}
+function dirty() { state.dirty=true; const el=$('#save-status');if(el)el.textContent='Alterações ainda não salvas'; }
+function freezeEditor(locked) {
+  document.querySelectorAll('.setup-shell input,.setup-shell textarea,.setup-shell button').forEach(el=>{
+    if(locked){el.dataset.wasDisabled=String(el.disabled);el.disabled=true;}
+    else if(el.dataset.wasDisabled!==undefined){el.disabled=el.dataset.wasDisabled==='true';delete el.dataset.wasDisabled;}
+  });
+}
+function configInput(event) {
+  const input=event.target;if(state.route!=='setup'||!input.dataset.scope)return;
+  const target=input.dataset.scope==='school'?state.draft:state.draft.candidates[state.selected];
+  if(input.name==='number')input.value=input.value.replace(/\D/g,'').slice(0,2);
+  target[input.name]=input.value;dirty();
+}
+function setup() {
+  state.route='setup';const d=state.draft,c=d.candidates[state.selected],labels=['Identidade','Candidaturas','Revisão'];
+  $('#app').innerHTML=`<main class="shell setup-shell"><header class="topbar">${brand()}<div class="top-actions"><span class="status"><i></i> Aplicativo offline</span><button class="icon-btn" data-action="fullscreen" aria-label="Tela cheia">${icon('expand')}</button></div></header><section class="setup-heading"><div><span class="eyebrow">Uma nova eleição começa aqui</span><h1>Do seu jeito.<br class="mobile-break"><em> Com a voz de todos.</em></h1><p>Personalize a eleição da sua escola em três passos.</p></div><span class="setup-badge">${icon('edit')} Espaço de criação</span></section><div class="setup-layout"><aside class="setup-sidebar"><nav class="setup-steps" aria-label="Etapas da personalização">${labels.map((label,i)=>`<button class="setup-step ${state.step===i?'active':''}" data-action="setup-step" data-value="${i}" ${state.configBusy?'disabled':''}><span>${state.step>i?icon('check'):'0'+(i+1)}</span><div><strong>${label}</strong><small>${['A cara da sua escola','Ideias, pessoas e números','Tudo pronto para começar'][i]}</small></div>${icon('arrow')}</button>`).join('')}</nav><div class="setup-tip">${icon('shield')}<strong>Primeiro personalize.<br>Depois, abra a votação.</strong><p>Ao abrir, o cadastro fica bloqueado para preservar a eleição.</p></div><div class="config-transfer"><button class="text-btn" data-action="export-config">${icon('download')} Exportar configuração</button><label class="text-btn upload-label">${icon('upload')} Importar configuração<input id="import-config" type="file" accept=".json,application/json"></label><p>Leve a mesma configuração para outros notebooks. Votos e presenças ficam em cada urna.</p></div></aside><section class="setup-panel" aria-label="${labels[state.step]}">${state.step===0?identityEditor(d):state.step===1?candidatesEditor(d,c):reviewEditor(d)}<footer class="editor-footer"><div class="save-state">${icon('info')}<span id="save-status">${state.dirty?'Alterações ainda não salvas':'Rascunho salvo neste notebook'}</span></div><div class="form-actions">${state.step>0?'<button class="btn secondary" data-action="setup-back">Voltar</button>':''}<button class="btn secondary" data-action="save-config">Salvar rascunho</button>${state.step<2?'<button class="btn primary" data-action="setup-next">Salvar e continuar '+icon('arrow')+'</button>':'<button class="btn primary" data-action="open-election">Abrir votação '+icon('arrow')+'</button>'}</div></footer></section></div><footer class="setup-bottom">${institutionalLogos()}<span>Voz da Escola · Feito para participar</span></footer></main>`;
+  if(state.configBusy||state.photoBusy)freezeEditor(true);
+}
+function identityEditor(d) {
+  return `<div class="editor-body"><div class="panel-heading"><span class="eyebrow">Passo 01</span><h2>A identidade da eleição</h2><p>Uma experiência com o nome e a marca da sua escola.</p></div><div class="identity-grid"><div><label class="field">Nome da escola <span class="required">*</span><input data-scope="school" name="school" value="${esc(d.school)}" maxlength="160" placeholder="Digite o nome da instituição" autocomplete="off"></label><label class="field">Título da eleição <span class="required">*</span><input data-scope="school" name="electionTitle" value="${esc(d.electionTitle)}" maxlength="160" placeholder="Ex.: Eleição do Grêmio Estudantil"></label><label class="field">Nome deste notebook / urna <span class="required">*</span><input data-scope="school" name="urnName" value="${esc(d.urnName)}" maxlength="80" placeholder="Ex.: Urna 01 — Biblioteca"><small>Use um nome diferente em cada notebook para reconhecer os resultados.</small></label></div><div class="identity-preview"><div class="logo-upload-preview">${imageSource(d.schoolLogo)?`<img src="${esc(d.schoolLogo)}" alt="Logo da escola">`:icon('urn')}</div><strong>Sua escola, sua identidade.</strong><p>Adicione a logo da instituição.<br>Esta etapa é opcional.</p><label class="btn secondary upload-label">${icon('upload')} Escolher logo<input id="school-photo" type="file" accept="image/png,image/jpeg,image/webp"></label>${d.schoolLogo?'<button class="text-btn" data-action="remove-school-logo">Remover logo</button>':''}<small>PNG, JPG ou WebP</small></div></div><div class="notice subtle">${icon('info')} Os dados ficam salvos na pasta Dados, ao lado do aplicativo. Não é preciso criar conta nem conectar à internet.</div></div>`;
+}
+function candidatesEditor(d,c) {
+  return `<div class="editor-body"><div class="panel-heading"><span class="eyebrow">Passo 02</span><h2>Quem vai fazer parte?</h2><p>Cadastre de 2 a 12 chapas ou candidaturas. Cada uma precisa de um número único de dois dígitos.</p></div><div class="candidate-editor-layout"><aside class="candidate-picker">${d.candidates.map((v,i)=>`<button class="candidate-pick ${i===state.selected?'active':''}" data-action="select-candidate" data-value="${i}"><span>${esc(v.number||'—')}</span><div><strong>${esc(v.name||'Nova candidatura')}</strong><small>Candidatura ${i+1}</small></div></button>`).join('')}<button class="btn secondary block" data-action="add-candidate" ${d.candidates.length>=12?'disabled':''}>${icon('plus')} Adicionar</button><small>${d.candidates.length} de 12 candidaturas</small></aside><div class="candidate-fields"><div class="candidate-edit-top"><h3>Candidatura ${state.selected+1}</h3><button class="text-btn danger-text" data-action="remove-candidate" ${d.candidates.length<=2?'disabled':''}>${icon('trash')} Remover</button></div><div class="candidate-basics"><label class="field">Nome da chapa / candidatura <span class="required">*</span><input data-scope="candidate" name="name" maxlength="120" value="${esc(c.name)}" placeholder="Como aparecerá na urna"></label><label class="field number-field">Número <span class="required">*</span><input data-scope="candidate" name="number" maxlength="2" inputmode="numeric" value="${esc(c.number)}" placeholder="00" aria-label="Número de dois dígitos"></label></div><div class="candidate-photo-upload"><div class="edit-photo">${photo(c)}</div><div><strong>Foto da chapa ou candidatura</strong><p>A foto aparece na tela inicial e na confirmação do voto. Prefira uma imagem em que todos apareçam.</p><label class="btn secondary upload-label">${icon('upload')} ${c.groupPhoto?'Trocar foto':'Escolher foto'}<input id="candidate-photo" type="file" accept="image/png,image/jpeg,image/webp"></label>${c.groupPhoto?'<button class="text-btn" data-action="remove-candidate-photo">Remover</button>':''}<small>PNG, JPG ou WebP · imagem ajustada automaticamente</small></div></div><label class="field">Representante <span class="optional">Opcional</span><input data-scope="candidate" name="representativeName" maxlength="120" value="${esc(c.representativeName)}" placeholder="Nome da pessoa representante"></label><label class="field">Propostas <span class="optional">Uma por linha</span><textarea data-scope="candidate" name="proposals" rows="5" maxlength="4000" placeholder="Escreva aqui as ideias e propostas">${esc(c.proposals)}</textarea></label><label class="field">Integrantes <span class="optional">Um por linha</span><textarea data-scope="candidate" name="members" rows="4" maxlength="4000" placeholder="Nome do integrante — série e turma">${esc(c.members)}</textarea></label></div></div></div>`;
+}
+function validationIssues(d) {
+  const issues=[];
+  if(d.school.trim().length<2)issues.push('Preencha o nome da escola.');
+  if(d.electionTitle.trim().length<2)issues.push('Preencha o título da eleição.');
+  if(d.urnName.trim().length<2)issues.push('Preencha o nome desta urna.');
+  const used=new Set();
+  d.candidates.forEach((c,i)=>{if(c.name.trim().length<2)issues.push(`Dê um nome à candidatura ${i+1}.`);if(!/^\d{2}$/.test(c.number))issues.push(`Informe dois dígitos para a candidatura ${i+1}.`);else if(used.has(c.number))issues.push(`O número ${c.number} está repetido.`);used.add(c.number);});
+  return issues;
+}
+function reviewEditor(d) {
+  const issues=validationIssues(d);
+  return `<div class="editor-body"><div class="panel-heading"><span class="eyebrow">Passo 03</span><h2>Confira. Prepare. Participe.</h2><p>Revise os dados antes de receber o primeiro voto.</p></div><div class="review-identity">${schoolMark(d)}<div><small>${esc(d.electionTitle)}</small><h3>${esc(d.school||'Nome da escola pendente')}</h3><span>${esc(d.urnName||'Nome da urna pendente')}</span></div><button class="icon-btn" data-action="setup-step" data-value="0" aria-label="Editar identidade">${icon('edit')}</button></div><div class="review-candidates">${d.candidates.map((c,i)=>`<button class="review-card tone-${i%3}" data-action="edit-review" data-value="${i}"><div class="review-photo">${photo(c)}</div><div><span>${esc(c.number||'—')}</span><strong>${esc(c.name||'Nome pendente')}</strong><small>${c.proposals.trim().split(/\r?\n/).filter(Boolean).length} propostas · ${c.members.trim().split(/\r?\n/).filter(Boolean).length} integrantes</small></div>${icon('edit')}</button>`).join('')}</div>${issues.length?`<div class="notice warning"><strong>Ainda falta um detalhe</strong><ul>${issues.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`:'<div class="notice success">'+icon('check')+' As informações obrigatórias estão preenchidas.</div>'}<label class="check-line review-confirm"><input id="open-confirm" type="checkbox"> <span>Conferi os nomes e números. Entendo que a configuração ficará bloqueada ao abrir a votação.</span></label><p class="small-text">Vai usar outros notebooks? Exporte a configuração e importe em cada um antes de abrir. Para uma nova eleição, use outra pasta limpa do aplicativo.</p></div>`;
+}
+async function ensureAccess(){if(!state.admin){const access=await api('admin/access',{});state.admin=access.adminToken;}}
+async function saveConfig(showMessage=true) {
+  if(state.configBusy||state.photoBusy)throw new Error('Aguarde a imagem ou o salvamento terminar.');
+  state.configBusy=true;freezeEditor(true);
+  try {await ensureAccess();state.draft.candidates.forEach((c,i)=>c.id='c'+(i+1));const saved=await api('admin/config',state.draft,true);state.draft=configuration(saved);state.dirty=false;if(showMessage)toast('Rascunho salvo neste notebook.');}
+  finally{state.configBusy=false;freezeEditor(false);}
+}
+async function configAction(name,button) {
+  if(state.configBusy||state.photoBusy)throw new Error('Aguarde a operação terminar.');
+  if(name==='setup-step'){state.step=Number(button.dataset.value);setup();return;}
+  if(name==='setup-back'){state.step--;setup();return;}
+  if(name==='setup-next'){await saveConfig(false);state.step++;setup();window.scrollTo(0,0);return;}
+  if(name==='save-config'){await saveConfig();setup();return;}
+  if(name==='select-candidate'){state.selected=Number(button.dataset.value);setup();return;}
+  if(name==='edit-review'){state.selected=Number(button.dataset.value);state.step=1;setup();return;}
+  if(name==='add-candidate'){if(state.draft.candidates.length>=12)return;state.draft.candidates.push({id:'c'+(state.draft.candidates.length+1),name:'',number:'',groupPhoto:'',representativeName:'',proposals:'',members:''});state.selected=state.draft.candidates.length-1;dirty();setup();return;}
+  if(name==='remove-candidate'){if(state.draft.candidates.length<=2)return;const c=state.draft.candidates[state.selected];dialog('Remover candidatura?',esc(c.name||'Candidatura sem nome'),'<div class="dialog-body"><p>Esta candidatura será retirada do rascunho.</p><div class="form-actions"><button class="btn secondary" data-action="dismiss">Manter</button><button class="btn danger" data-action="confirm-remove-candidate">Remover candidatura</button></div></div>');return;}
+  if(name==='confirm-remove-candidate'){state.draft.candidates.splice(state.selected,1);state.selected=Math.max(0,state.selected-1);state.draft.candidates.forEach((c,i)=>c.id='c'+(i+1));dirty();dismiss();setup();return;}
+  if(name==='remove-school-logo'){state.draft.schoolLogo='';dirty();setup();return;}
+  if(name==='remove-candidate-photo'){state.draft.candidates[state.selected].groupPhoto='';dirty();setup();return;}
+  if(name==='export-config'){await saveConfig(false);const d={...state.draft};delete d.urnName;download(JSON.stringify({format:'voz-da-escola-config-v1',...d},null,2),'configuracao-voz-da-escola.json','application/json');setup();toast('Configuração exportada. Importe nos outros notebooks antes de abrir a votação.');return;}
+  if(name==='open-election'){
+    const issues=validationIssues(state.draft);if(issues.length)throw new Error(issues[0]);if(!$('#open-confirm')?.checked)throw new Error('Marque a confirmação depois de conferir a configuração.');
+    button.disabled=true;
+    try{await saveConfig(false);state.data=await api('admin/open',{},true);state.draft=null;state.dirty=false;home();toast('Votação aberta. A escola já pode participar.');}finally{button.disabled=false;}
+    return;
+  }
+}
+async function uploadPhoto(file,school=false) {
+  if(!file)return;if(!/^image\/(png|jpeg|webp)$/.test(file.type))throw new Error('Escolha uma imagem PNG, JPG ou WebP.');
+  if(file.size>15*1024*1024)throw new Error('Escolha uma foto de até 15 MB.');
+  if(state.photoBusy||state.configBusy)throw new Error('Aguarde a operação em andamento.');
+  const candidate=state.draft.candidates[state.selected];state.photoBusy=true;freezeEditor(true);toast('Preparando sua imagem…');
+  try {
+    const src=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Não foi possível ler a imagem.'));reader.readAsDataURL(file);});
+    const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('A imagem não pôde ser aberta.'));img.src=src;});
+    const max=school?640:1600,scale=Math.min(1,max/Math.max(image.naturalWidth,image.naturalHeight));
+    const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));const context=canvas.getContext('2d');
+    if(!school){context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);}context.drawImage(image,0,0,canvas.width,canvas.height);
+    const data=canvas.toDataURL(school?'image/png':'image/jpeg',.88);
+    if(data.length>4*1024*1024)throw new Error('A imagem ficou grande demais. Escolha uma imagem menor.');
+    if(school)state.draft.schoolLogo=data;else candidate.groupPhoto=data;dirty();toast('Imagem pronta. Salve o rascunho para guardar.');
+  }finally{state.photoBusy=false;setup();}
+}
+async function importConfiguration(file) {
+  if(!file)return;if(state.photoBusy||state.configBusy)throw new Error('Aguarde a operação terminar.');if(file.size>60*1024*1024)throw new Error('Configuração grande demais.');
+  let imported;try{imported=JSON.parse(await file.text());}catch(_){throw new Error('O arquivo não é uma configuração JSON válida.');}
+  if(!imported||!['voz-da-escola-config-v1','urna-estudantil-config-v1'].includes(imported.format)||!Array.isArray(imported.candidates)||imported.candidates.length<2||imported.candidates.length>12||!imported.candidates.every(c=>c&&typeof c==='object'&&['name','number','groupPhoto','proposals','members','representativeName'].every(k=>c[k]===undefined||typeof c[k]==='string')))throw new Error('Selecione um arquivo exportado pelo editor desta urna.');
+  const previous=state.draft,selected=state.selected;
+  try{state.draft=configuration({...imported,urnName:previous.urnName});state.selected=0;await saveConfig(false);state.step=2;setup();toast('Configuração importada. Confira os dados e o nome deste notebook.');}
+  catch(err){state.draft=previous;state.selected=selected;setup();throw err;}
+}
 function dialog(title,description,body,wide=false) {
   $('#modal-root').innerHTML=`<div class="modal-backdrop"><section class="dialog ${wide?'wide':''}" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header class="dialog-head"><div><h2 id="dialog-title">${title}</h2>${description?`<p>${description}</p>`:''}</div><button class="icon-btn" data-action="dismiss" aria-label="Fechar">${icon('close')}</button></header>${body}</section></div>`;
-  setTimeout(()=>$('.dialog input:not([type=file]):not([readonly])')?.focus(),70);
+  state.dialogFocus=document.activeElement;
+  setTimeout(()=>($('.dialog input:not([type=file]):not([readonly])')||$('.dialog button'))?.focus(),70);
 }
 function candidateDetails(id) {
   const c=state.data.candidates.find(candidate=>candidate.id===id);if(!c)return;
   const proposals=String(c.proposals||'').split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
   const members=String(c.members||'').split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
   dialog(esc(c.name),`Chapa ${esc(c.number)} · Conheça a equipe e as propostas`,
-    `<div class="dialog-body candidate-details"><div class="candidate-detail-layout"><figure class="details-group"><button class="detail-photo-button" data-action="enlarge-photo" data-value="${esc(c.id)}" aria-label="Ampliar foto da ${esc(c.name)}">${photo(c)}<span class="photo-zoom-label">${icon('expand')} Ampliar foto</span></button><figcaption>Representante: ${esc(c.representativeName||'Nome a definir')}</figcaption></figure><div class="details-copy"><h3>Principais propostas</h3>${proposals.length?`<ul class="proposal-list">${proposals.map(line=>`<li>${esc(line)}</li>`).join('')}</ul>`:'<p class="small-text mt">As propostas desta chapa ainda não foram informadas.</p>'}${members.length?`<section class="team-section"><h3>Integrantes da chapa</h3><ul class="member-list">${members.map(line=>`<li>${esc(line)}</li>`).join('')}</ul></section>`:''}</div></div><div class="form-actions"><button class="btn primary" data-action="dismiss">Voltar às chapas ${icon('back')}</button></div></div>`,true);
+    `<div class="dialog-body candidate-details"><div class="candidate-detail-layout"><figure class="details-group"><button class="detail-photo-button" data-action="enlarge-photo" data-value="${esc(c.id)}" aria-label="Ampliar foto da ${esc(c.name)}">${photo(c)}<span class="photo-zoom-label">${icon('expand')} Ampliar foto</span></button><figcaption>${c.representativeName?'Representante: '+esc(c.representativeName):'Chapa '+esc(c.number)}</figcaption></figure><div class="details-copy"><h3>Principais propostas</h3>${proposals.length?`<ul class="proposal-list">${proposals.map(line=>`<li>${esc(line)}</li>`).join('')}</ul>`:'<p class="small-text mt">As propostas desta chapa ainda não foram informadas.</p>'}${members.length?`<section class="team-section"><h3>Integrantes da chapa</h3><ul class="member-list">${members.map(line=>`<li>${esc(line)}</li>`).join('')}</ul></section>`:''}</div></div><div class="form-actions"><button class="btn primary" data-action="dismiss">Voltar às chapas ${icon('back')}</button></div></div>`,true);
 }
 function enlargePhoto(id){
   const c=state.data.candidates.find(candidate=>candidate.id===id);if(!c)return;
-  dialog(esc(c.name),`Chapa ${esc(c.number)} · Foto do grupo`, `<div class="dialog-body photo-viewer">${photo(c)}<div class="form-actions"><button class="btn primary" data-action="candidate-details" data-value="${esc(c.id)}">Voltar à chapa ${icon('back')}</button></div></div>`,true);
+  dialog(esc(c.name),`Chapa ${esc(c.number)} · Foto da candidatura`, `<div class="dialog-body photo-viewer">${photo(c)}<div class="form-actions"><button class="btn primary" data-action="candidate-details" data-value="${esc(c.id)}">Voltar à chapa ${icon('back')}</button></div></div>`,true);
 }
-function dismiss() { $('#modal-root').innerHTML='';state.admin=null;state.adminData=null; }
+function dismiss() { $('#modal-root').innerHTML='';state.admin=null;state.adminData=null;state.dialogFocus?.focus(); }
 function identify() {
   if(state.data.status!=='open')return;
   dialog('Antes de votar, identifique-se.','Preencha os dados como estão na lista da sua turma.',`<form class="dialog-body" data-form="identify"><label class="field">Nome completo<input name="name" autocomplete="off" maxlength="120" required placeholder="Digite seu nome completo"></label><label class="field">Série e turma<input name="grade" autocomplete="off" maxlength="60" required placeholder="Ex.: 8º ano A"></label><div class="notice">Seu nome registra a sua participação. O sistema guarda apenas a soma dos votos, sem associar sua escolha à sua identificação.</div><button class="btn primary block" type="submit">Ir para a urna ${icon('arrow')}</button></form>`);
@@ -99,7 +191,7 @@ function screen() {
     else if(selected==='nullVote')content+='<div class="blank-title">VOTO NULO</div><p class="choice-info">Número não cadastrado. Para trocar, aperte CORRIGE.</p>';
     else content+='<p class="screen-message">Use o teclado ao lado para digitar os <b>2 dígitos</b> da sua chapa.<br><br>Você também pode votar em branco.</p>';
   }
-  $('#ballot-screen').innerHTML=`<div class="screen-eyebrow">SEU VOTO PARA</div><h2 class="vote-office">Grêmio estudantil</h2>${content}<div class="screen-bottom">${state.saving?'<b>Gravando seu voto… Aguarde.</b>':selected?'<b>CONFIRMA</b> para registrar seu voto.<br><b>CORRIGE</b> para escolher novamente.':'O voto é sigiloso.<br>Confira sua escolha antes de confirmar.'}</div>`;
+  $('#ballot-screen').innerHTML=`<div class="screen-eyebrow">SEU VOTO PARA</div><h2 class="vote-office">${esc(state.data.electionTitle)}</h2>${content}<div class="screen-bottom">${state.saving?'<b>Gravando seu voto… Aguarde.</b>':selected?'<b>CONFIRMA</b> para registrar seu voto.<br><b>CORRIGE</b> para escolher novamente.':'O voto é sigiloso.<br>Confira sua escolha antes de confirmar.'}</div>`;
   document.querySelectorAll('.key,.action-key').forEach(b=>b.disabled=state.saving);
   $('.confirma').disabled=state.saving || !selected;
 }
@@ -169,7 +261,6 @@ function mergedCsv(d) {
   return '\uFEFF'+rows.map(r=>r.map(csvCell).join(';')).join('\r\n');
 }
 function printReport(d,merged=false) {
-  // The same original institutional images are also printed on the ballot report.
   $('#print-root').innerHTML=`<h1>${merged?'Apuração geral':'Boletim de urna'}<br>Grêmio estudantil</h1><p><b>${esc(d.school||state.data.school)}</b><br>${esc(d.electionTitle||state.data.electionTitle)}<br>${merged?`${state.batches.length} urnas consolidadas`:esc(d.urnName)}<br>Emitido em ${esc(new Date().toLocaleString('pt-BR'))}</p>${resultsTable(d)}<p>Presenças conferidas: ${(d.participants||[]).length}. Total de votos: ${total(d.counts)}.<br>Votos nominais + brancos + nulos = total de votos registrados.</p>${merged?`<p>Urnas: ${state.batches.map(b=>esc(b.urnName)).join(', ')}.</p>`:`<p>Identificador da urna: ${esc(d.urnId||'')}</p>`}<p>A identificação dos alunos é registrada separadamente da apuração. Este boletim não revela a escolha de nenhum estudante.</p><div class="print-signatures"><div>Responsável pela urna</div><div>Responsável pela conferência</div></div>`;
   $('#print-root').insertAdjacentHTML('afterbegin',institutionalLogos());
   window.print();
@@ -185,6 +276,8 @@ async function handleForm(form) {
   finally{submit.disabled=false;}
 }
 async function action(name,button) {
+  if(['setup-step','setup-back','setup-next','save-config','select-candidate','edit-review','add-candidate','remove-candidate','confirm-remove-candidate','remove-school-logo','remove-candidate-photo','export-config','open-election'].includes(name)){if(state.route!=='setup')return;await configAction(name,button);return;}
+  if(name==='brand-home'){if(state.route==='ballot'||state.route==='success')return;if(state.route==='setup'){window.scrollTo(0,0);return;}await goHome();return;}
   if(name==='fullscreen'){if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();return;}
   if(name==='dismiss'){dismiss();return;}
   if(name==='identify'){identify();return;}
@@ -221,6 +314,9 @@ document.addEventListener('click',event=>{const button=event.target.closest('[da
 document.addEventListener('submit',event=>{if(event.target.matches('[data-form]')){event.preventDefault();handleForm(event.target);}});
 document.addEventListener('change',async event=>{
   try{
+    if(event.target.id==='school-photo'){await uploadPhoto(event.target.files[0],true);return;}
+    if(event.target.id==='candidate-photo'){await uploadPhoto(event.target.files[0]);return;}
+    if(event.target.id==='import-config'){await importConfiguration(event.target.files[0]);return;}
     if(event.target.id==='batch-files'){
       const files=Array.from(event.target.files);state.batches=[];state.merged=null;$('#merged-result').innerHTML='';
       if(files.length>100)throw new Error('Selecione até 100 arquivos de urna por vez.');
@@ -230,7 +326,15 @@ document.addEventListener('change',async event=>{
     }
   }catch(err){toast(err.message,true);if(event.target.id==='batch-files'){$('[data-action=merge]').disabled=true;$('#batch-list').textContent='Seleção inválida. Escolha novamente os arquivos.';}}
 });
+document.addEventListener('input',configInput);
+window.addEventListener('beforeunload',event=>{if(state.route==='setup'&&state.dirty){event.preventDefault();event.returnValue='';}});
 document.addEventListener('keydown',event=>{
+  const modal=$('.dialog');
+  if(modal){
+    if(event.key==='Escape'){dismiss();return;}
+    if(event.key==='Tab'){const nodes=Array.from(modal.querySelectorAll('button:not([disabled]),input:not([disabled]),select,textarea,a[href]')).filter(n=>n.offsetParent!==null);const first=nodes[0],last=nodes[nodes.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}}
+    return;
+  }
   if(state.route!=='ballot'||state.saving||$('#modal-root').hasChildNodes())return;
   let a=null;
   if(/^\d$/.test(event.key)){event.preventDefault();action('digit',{dataset:{value:event.key}});return;}

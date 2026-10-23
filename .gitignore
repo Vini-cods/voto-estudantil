@@ -15,6 +15,7 @@
 **/apuracao-geral-gremio.json
 **/apuracao-geral-gremio.csv
 **/configuracao-chapas.json
+**/configuracao-voz-da-escola.json
 *.lock
 *.log
 *.pid

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Guia de uso • Urna Estudantil</title>
+<title>Guia de uso • Voz da Escola 2.0</title>
 <style>
 :root{--ink:#172936;--muted:#536570;--line:#d7e1e5;--green:#08644c;--pale:#eef7f3;--gold:#f4b941;--paper:#fff;--back:#eff3f5}
 *{box-sizing:border-box}html{font-size:16px}body{margin:0;background:var(--back);color:var(--ink);font-family:Segoe UI,Arial,sans-serif;line-height:1.5}.page{max-width:920px;margin:28px auto;background:var(--paper);padding:44px 52px;box-shadow:0 8px 36px #1729360d;border:1px solid var(--line)}.eyebrow{color:var(--green);font-weight:700;font-size:.78rem;letter-spacing:.13em;text-transform:uppercase}.heading{display:flex;align-items:center;gap:16px;border-bottom:2px solid var(--ink);padding-bottom:21px;margin-bottom:25px}.mark{width:48px;height:48px;border:2px solid var(--green);border-radius:12px;display:grid;place-items:center;color:var(--green);font-size:28px;font-weight:700;flex:none}h1{font-size:2rem;line-height:1.13;letter-spacing:-.04em;margin:4px 0 0}h2{font-size:1.42rem;line-height:1.2;letter-spacing:-.02em;margin:30px 0 12px}h3{font-size:1rem;margin:19px 0 6px}p{margin:0 0 12px}.lead{font-size:1.05rem;color:var(--muted);max-width:70ch}.note{padding:15px 18px;background:var(--pale);border-left:4px solid var(--green);margin:18px 0}.warning{background:#fff8e8;border-color:var(--gold)}.note p:last-child{margin-bottom:0}.steps{list-style:none;counter-reset:step;margin:20px 0 0;padding:0}.steps li{counter-increment:step;position:relative;padding:0 0 18px 47px;margin:0 0 2px}.steps li:before{content:counter(step);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--green);color:white;display:grid;place-items:center;font-weight:700}.steps strong{display:block;margin-bottom:3px}.steps span{display:block;color:var(--muted)}ul,ol{padding-left:22px;margin:8px 0 16px}li{margin:5px 0}code{font-family:Consolas,monospace;background:#f1f4f5;border-radius:3px;padding:1px 4px;font-size:.9em;overflow-wrap:anywhere}strong{font-weight:650}table{border-collapse:collapse;width:100%;font-size:.92rem;margin:14px 0 20px}th,td{text-align:left;vertical-align:top;border-bottom:1px solid var(--line);padding:10px 12px}th{background:#f1f5f6;font-weight:650}th:first-child,td:first-child{padding-left:0;width:30%}th:first-child{padding-left:12px}td:first-child{font-weight:650}.footer{display:flex;justify-content:space-between;gap:20px;margin-top:30px;padding-top:13px;border-top:1px solid var(--line);font-size:.77rem;color:var(--muted)}.formula{font-size:1rem;font-weight:650;padding:13px 16px;border:1px solid var(--line);border-radius:7px;background:#fafcfc}.toolbar{max-width:920px;margin:25px auto 0;display:flex;justify-content:flex-end}.print{font:600 .9rem Segoe UI,Arial,sans-serif;cursor:pointer;background:var(--green);color:#fff;border:0;border-radius:7px;padding:11px 17px}a{color:var(--green)}.small{font-size:.87rem;color:var(--muted)}
@@ -15,23 +15,25 @@
 <div class="toolbar"><button class="print" onclick="window.print()">Imprimir / salvar este guia em PDF</button></div>
 
 <section class="page">
-  <header class="heading"><div class="mark" aria-hidden="true">✓</div><div><div class="eyebrow">Guia de uso • 01</div><h1>Urna Estudantil</h1></div></header>
-  <p class="lead">Votação presencial para três candidaturas, em notebooks com Windows 10 ou 11. O programa funciona sem internet e salva os dados no próprio computador.</p>
-  <div class="note"><p><strong>Basta um arquivo para iniciar: <code>UrnaEstudantil.exe</code>.</strong> As fotos, os logotipos e a interface já estão incorporados. Copie o EXE para uma pasta própria no disco local de cada notebook e abra-o. A tela abre no navegador, sem internet, instalação ou extração. O programa usa o .NET Framework do Windows.</p></div>
+  <header class="heading"><div class="mark" aria-hidden="true">✓</div><div><div class="eyebrow">Guia de uso • 01</div><h1>Voz da Escola 2.0</h1></div></header>
+  <p class="lead">Urna configurável para eleições escolares, com 2 a 12 chapas, em notebooks com Windows 10 ou 11. Funciona sem internet e salva os dados no próprio computador.</p>
+  <div class="note"><p><strong>Basta um arquivo para iniciar: <code>UrnaEstudantil.exe</code>.</strong> O programa e a interface estão incorporados. Na primeira execução, cadastre sua eleição. As imagens e os dados adicionados pela escola ficam em <code>Dados</code>, ao lado do EXE. A tela abre no navegador, sem instalação ou extração. O programa usa o .NET Framework do Windows.</p></div>
   <h2>Início rápido</h2>
   <ol class="steps">
-    <li><strong>Copie apenas o executável para cada notebook.</strong><span>Crie uma pasta própria no disco local, com permissão de gravação, e copie o EXE original. No primeiro uso, ele cria <code>Dados</code> ao lado. Não leve a pasta <code>Dados</code> de outra urna nem execute a votação diretamente no pendrive.</span></li>
-    <li><strong>Abra o EXE e comece a usar.</strong><span>Na primeira execução, a votação já abre pronta para a escola “Araci Zebral Teixeira”. Cada notebook recebe automaticamente um nome no formato “Urna XXXXXXXX”, com oito caracteres de identificação. Ao reabrir uma pasta existente, o programa preserva os dados e o estado da urna; uma urna encerrada continua encerrada.</span></li>
-    <li><strong>Consulte as três chapas prontas.</strong><span>Conexão — 01, com Julia Oliveira (2º A); Liderança Jovem — 07, com Isabelly M (1º D); Renascer — 10, com Fernanda Santos de Souza (1º D). Todas incluem foto do grupo, propostas e integrantes. Os alunos digitam o número com dois dígitos, incluindo o zero inicial.</span></li>
-    <li><strong>Distribua as turmas entre os notebooks.</strong><span>Atribua cada turma a um único aparelho e registre essa distribuição. Confira presencialmente a identidade dos alunos. Para um ensaio, copie o EXE para uma pasta separada; use outra pasta, sem os dados do ensaio, para a eleição real.</span></li>
+    <li><strong>Copie apenas o EXE para uma pasta de cada notebook.</strong><span>Use uma pasta própria no disco local, com permissão de gravação. O programa cria <code>Dados</code> ao lado. Para outra urna ou eleição, copie só o EXE, sem levar dados anteriores.</span></li>
+    <li><strong>Preencha escola, eleição e nome da urna.</strong><span>Informe o nome da escola, o título da eleição e um nome diferente para cada notebook. Atribua cada turma a um único aparelho e registre essa distribuição.</span></li>
+    <li><strong>Cadastre de 2 a 12 chapas.</strong><span>Informe o nome e um número exclusivo de dois dígitos para cada chapa. Confira os zeros iniciais. Os números serão digitados pelos alunos na tela de votação.</span></li>
+    <li><strong>Adicione imagens e informações das chapas.</strong><span>Inclua a foto do grupo, o nome do representante, as propostas e os integrantes. Se desejar, adicione um logotipo da escola. Confira o conteúdo e as imagens.</span></li>
+    <li><strong>Compartilhe a configuração com os outros notebooks.</strong><span>Use “Exportar configuração” e “Importar configuração”. O arquivo leva somente a configuração, sem votos ou comparecimentos. Confira o nome de cada urna após importar e salve.</span></li>
+    <li><strong>Use “Abrir votação” depois da conferência.</strong><span>A abertura bloqueia a edição da configuração e das chapas. A partir daí, o aluno informa nome e série/turma, escolhe e confirma o voto. Confira sua identidade presencialmente.</span></li>
   </ol>
-  <div class="note warning"><p><strong>A pasta <code>Dados</code> fica ao lado do EXE e contém o estado da urna.</strong> Não a apague, mova, renomeie ou substitua durante a eleição. Para criar outra urna, copie só o EXE. Para atualizar esta urna na mesma pasta, troque apenas o EXE e preserve <code>Dados</code>.</p></div>
-  <footer class="footer"><span>Uso local e supervisionado pela escola</span><span>Início • 1 de 4</span></footer>
+  <div class="note warning"><p><strong>Preserve <code>Dados</code> ao atualizar.</strong> Troque apenas o EXE na mesma pasta. Eleições existentes retomam seu estado: abertas continuam abertas e encerradas continuam encerradas. Durante a eleição, não apague, mova, renomeie nem substitua <code>Dados</code>.</p></div>
+  <footer class="footer"><span>Uso local e supervisionado pela escola</span><span>Configuração • 1 de 4</span></footer>
 </section>
 
 <section class="page">
   <header class="heading"><div class="mark" aria-hidden="true">✓</div><div><div class="eyebrow">Guia de uso • 02</div><h1>Durante a votação</h1></div></header>
-  <p class="lead">Consulte as três chapas na tela inicial. Use “Ampliar foto”, no início ou nos detalhes, para ver o grupo inteiro. “Voltar à chapa” fecha a ampliação.</p>
+  <p class="lead">Consulte as chapas na tela inicial. Use “Ampliar foto”, no início ou nos detalhes, para ver o grupo inteiro. “Voltar à chapa” fecha a ampliação.</p>
   <h2>O caminho do aluno</h2>
   <ol class="steps">
     <li><strong>Informar nome completo e série/turma.</strong><span>Confira a grafia e use um padrão de turma em toda a escola. Esses dados servem para a lista de comparecimento e para a verificação de repetição.</span></li>
@@ -66,7 +68,7 @@
     <li>Se precisar baixar novamente o CSV, use “Baixar resultado (Excel)”. Salve também “Baixar arquivo da urna (JSON)”: ele é obrigatório para a consolidação. “Baixar lista de presença” exporta o comparecimento. Para PDF, use “Imprimir / PDF” e escolha a impressora PDF do Windows.</li>
     <li>Copie os arquivos para o pendrive, mantendo nomes diferentes por notebook. Preserve também a pasta completa do programa com <code>Dados</code> no notebook.</li>
   </ol>
-  <div class="formula">Total de votos = votos das três candidaturas + brancos + nulos = comparecimentos confirmados</div>
+  <div class="formula">Total de votos = votos de todas as chapas + brancos + nulos = comparecimentos confirmados</div>
   <p class="small" style="margin-top:9px">Os votos brancos e nulos entram no total geral. Compare o total com a lista de comparecimento; não some essa lista novamente aos votos.</p>
   <h2>2. Consolide em um só computador</h2>
   <ol>
@@ -88,9 +90,9 @@
   <table>
     <thead><tr><th>Item</th><th>Para que serve</th></tr></thead>
     <tbody>
-      <tr><td><code>UrnaEstudantil.exe</code></td><td>Contém o programa, as fotos, os logotipos e a interface. Abra-o na pasta local da urna.</td></tr>
+      <tr><td><code>UrnaEstudantil.exe</code></td><td>Contém o programa e a interface. Abra-o na pasta local da urna.</td></tr>
       <tr><td>ZIP completo opcional</td><td>Reúne manuais, materiais de apoio e fontes. O EXE funciona sozinho.</td></tr>
-      <tr><td>Pasta <code>Dados</code></td><td>Guarda a eleição, sua identificação, as chapas, contagens e comparecimentos. É a parte crítica para recuperar a urna.</td></tr>
+      <tr><td>Pasta <code>Dados</code></td><td>Guarda a configuração, imagens, identidade da urna, contagens e comparecimentos. É a parte crítica para recuperar a eleição.</td></tr>
       <tr><td>JSON final de cada urna</td><td>Permite validar e consolidar resultados. Guarde junto dos relatórios finais.</td></tr>
       <tr><td>CSV e PDF</td><td>Permitem conferir, imprimir e arquivar os resultados. O CSV abre no Excel; o PDF é gerado pela impressão.</td></tr>
     </tbody>

@@ -1,16 +1,20 @@
-URNA ESTUDANTIL - ARACI ZEBRAL TEIXEIRA
-Versao 1.2 - 20/10/2026
+VOZ DA ESCOLA - URNA ESTUDANTIL CONFIGURAVEL
+Versao 2.0 - 22/10/2026
 
 1. Baixe UrnaEstudantil.exe. Crie uma pasta propria no disco local de cada
    notebook Windows e copie somente o EXE para ela.
-2. Abra o EXE. Fotos, logotipos e interface ja estao incluidos; o navegador
-   abre offline, sem instalacao ou extracao. Mantenha o programa aberto.
+2. Abra o EXE. A interface abre no navegador offline, sem instalacao ou
+   extracao. Mantenha o programa aberto.
    O ZIP completo e opcional, com manuais, fontes e INICIAR.cmd de apoio.
-3. A primeira execucao ja abre a votacao com as tres chapas prontas.
-   Cada notebook recebe automaticamente um nome: Urna XXXXXXXX (8 caracteres).
-4. Atribua cada turma a um unico notebook e anote essa distribuicao.
-   Confira presencialmente a identidade dos alunos.
-5. O aluno informa nome e serie/turma, digita os dois digitos e CONFIRMA.
+3. No primeiro uso, preencha escola, titulo da eleicao e nome da urna.
+   Cadastre de 2 a 12 chapas com nome e numero unico de dois digitos.
+   Adicione foto do grupo, representante, propostas e integrantes.
+   Um logotipo da escola pode ser adicionado.
+4. Salve a configuracao. Exportar configuracao e Importar configuracao levam
+   os mesmos dados da eleicao aos outros notebooks, sem votos ou presencas.
+   Confira o nome de cada urna e atribua cada turma a um unico notebook.
+5. Confira tudo e use Abrir votacao. A configuracao fica bloqueada.
+   O aluno informa nome e serie/turma, digita os dois digitos e CONFIRMA.
    Apos salvar, aparece FIM e a tela volta ao inicio para o proximo aluno.
 6. Ao terminar, use Finalizar votacao. Marque a confirmacao de encerramento
    definitivo e use Finalizar e ver resultado. O CSV para Excel sera baixado.
@@ -20,12 +24,6 @@ Versao 1.2 - 20/10/2026
    use Ver resultados e depois Somar urnas.
    Exporte o resultado geral para Excel ou imprima/salve como PDF.
 
-CHAPAS JA CADASTRADAS:
-01 - Chapa Conexao - Julia Oliveira, 2o ano A
-07 - Lideranca Jovem - Isabelly M, 1o ano D
-10 - Renascer - Fernanda Santos de Souza, 1o ano D
-
-As tres chapas ja incluem foto do grupo, propostas e integrantes.
 A foto do grupo aparece em destaque no inicio, nos detalhes e na votacao.
 No inicio ou nos detalhes, use "Ampliar foto" para ver o grupo inteiro.
 Use "Voltar a chapa" para retornar.
@@ -48,7 +46,8 @@ nao cria uma lista ligando cada aluno a uma chapa. O computador e os arquivos
 precisam ficar sob supervisao da escola; trata-se de uma urna escolar,
 sem as garantias de seguranca de uma urna oficial.
 
-No primeiro uso, a urna inicia SEM votos e ja aberta para votar.
+No primeiro uso, a urna inicia SEM votos, na tela de configuracao.
+Para outra eleicao, use o EXE em uma pasta nova, sem copiar Dados.
 Ao retomar uma pasta existente, os dados e o estado sao preservados;
 uma urna encerrada continua encerrada e permite consultar os resultados.
 Leia LEIA-ME.html ou Manual-de-uso.pdf para as instrucoes completas.
