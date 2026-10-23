@@ -36,7 +36,7 @@ function toast(message, error=false) {
   state.toastTimer=setTimeout(()=>{el.className='';},error?8500:5000);
 }
 async function refresh() { state.data=await api('state'); if(state.data.csrfToken)state.csrf=state.data.csrfToken; }
-function institutionalLogos(){return '<div class="institutional-logos" aria-label="Símbolos institucionais"><img class="logo-gresp" src="/assets/gresp.png" alt="GRESP — Grêmio Estudantil Paulista"><img class="logo-sp" src="/assets/estado-sp.png" alt="Governo do Estado de São Paulo"></div>';}
+function institutionalLogos(){return '<div class="institutional-logos" aria-label="Símbolos institucionais"><img class="logo-gresp" src="/assets/gresp.png" alt="GRESP — Grêmio Estudantil Paulista"><img class="logo-sp" src="/assets/estado-sp.png" alt="Brasão do Estado de São Paulo"></div>';}
 function brand() { return `<a class="brand" href="#" data-action="brand-home" aria-label="Voz da Escola, início"><span class="brand-icon">${icon('urn')}</span><span class="brand-text"><strong>Voz da Escola<span class="brand-dot">.</span></strong><small>Participação que transforma</small></span></a>`; }
 function imageSource(src) { return /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(src||''); }
 function photo(candidate) {

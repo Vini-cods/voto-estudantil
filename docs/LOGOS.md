@@ -4,7 +4,7 @@
 
 O aplicativo distribuído incorpora apenas `src/web/assets/gresp.png` e `src/web/assets/estado-sp.png`. A logo própria de cada escola é opcional e é cadastrada localmente pelo usuário. Fotografias e símbolos da eleição anterior não entram no executável nem no ZIP genérico.
 
-A marca do Governo do Estado de São Paulo foi extraída da composição vetorial da página 18 do [Manual de Identidade Visual do Centro Paula Souza, março de 2024](https://bkpsitecpsnew.blob.core.windows.net/uploadsitecps/sites/1/2024/03/2024_03_manual_de_identidade_visual_cps.pdf). O arquivo contém apenas a marca do Estado, sem a assinatura da Secretaria da Educação. Foi renderizado como PNG em alta resolução, mantendo as cores e proporções originais. Essa marca não foi redesenhada por IA.
+O brasão do Estado de São Paulo em `estado-sp.png` é o PNG de 600 × 600 pixels fornecido pelo usuário em 22/10/2026. O arquivo original é incorporado sem recorte, redesenho ou alteração das cores. A interface preserva suas proporções tanto na tela quanto na impressão. Ele substitui a marca horizontal do governo usada na entrega anterior.
 
 ## Materiais originais da eleição anterior
 
