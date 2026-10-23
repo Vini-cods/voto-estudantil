@@ -14,11 +14,16 @@ Registro de desenvolvimento de 23/10/2026. Todos os testes usam dados fictícios
 - Intercâmbio real entre os motores Windows e Android em urnas fictícias: mesmo identificador de eleição, identificadores de urna distintos e soma exata de quatro votos nos dois lados, incluindo branco e nulo. Exportações repetidas, eleições incompatíveis e alunos repetidos são recusados.
 - Teste JavaScript da ponte: roteamento Android, UTF-8, erros, cancelamento, espera pelo salvamento efetivo e preservação do transporte HTTP no Windows.
 - Compilação e suíte de integração Windows completas após a adaptação da interface compartilhada.
+- Após incluir os limites físicos dos diálogos e alternativas em `vh` para WebView 80/83, recompilação Windows, sintaxe JavaScript, teste da ponte e suíte Windows completas passaram. Os dois ZIPs oficiais foram regenerados e conferidos: 16 arquivos previstos, recursos web idênticos às fontes atuais e ausência de dados de eleição.
 - Manual atualizado para cinco páginas, renderizado com Poppler e PDFium e conferido visualmente. PDFium foi usado para confirmar falhas de renderização de fontes no Poppler local.
 
-## Limitação de execução Android
+## Execução Android e limites
 
-**O APK não foi executado em tablet físico nem em emulador funcional.** O computador não tem o driver de aceleração do emulador. Uma tentativa isolada, sem aceleração, encerrou antes de iniciar o Android, com avisos de recursos de CPU não suportados e término do renderizador. Não foram instalados drivers, alteradas proteções do Windows ou acessados aparelhos reais.
+O APK de avaliação foi instalado e aberto em um emulador AOSP Android 11 (API 30), com WebView 83.0.4103.120. A atividade `MainActivity` ficou em primeiro plano (`resumed`) e uma captura do próprio aplicativo confirmou a tela inicial de personalização legível. A janela de espelhamento foi aberta com scrcpy 5.0.1 e renderização por software.
+
+O driver AEHD 2.2 foi instalado com autorização do usuário e ficou utilizável. O computador tem 4 GB de RAM; o emulador foi iniciado com `-lowram -memory 1536` e apresentou bastante lentidão. Houve um aviso inicial de aplicativo sem resposta do SystemUI do Android; após escolher Aguardar, o aviso desapareceu. O emulador também reiniciou serviços ao retomar uma pausa, interrompendo uma tentativa de atualização do APK.
+
+**O ensaio gráfico cobriu instalação, abertura e a tela inicial de personalização. Ainda não foi realizado um ciclo completo de votação e exportação no Android, nem um teste em tablet físico da Seduc.**
 
 Ainda precisam ser ensaiados pela TI da Seduc, no modelo de tablet e na política de gestão usados: instalação, abertura, teclado, foto pelo seletor, votação completa, rotação, retomada após fechar, salvamento/cancelamento de CSV/JSON, impressão/PDF e atualização preservando dados. Os testes de lógica e a verificação da assinatura não substituem esse ensaio.
 
@@ -43,4 +48,4 @@ Fontes técnicas: [conteúdo local em WebView](https://developer.android.com/dev
 
 ## Identificação do APK conferido
 
-SHA-256: `e98bcac5b98f869e89abe976f2364549be98ea59a81826ce78f2ea03faf1b855`.
+SHA-256: `29861633b7229d347cfed7f5f5a24ce3de21df4ab5b699665e9e2045c758a724`.
