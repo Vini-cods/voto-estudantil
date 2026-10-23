@@ -32,3 +32,6 @@
 
 /* Keep decorative orbits inside their illustration at narrow widths. */
 .hero-visual{max-width:100%;overflow:clip}
+
+/* The Android shell already fills its application window. */
+.android-app [data-action="fullscreen"]{display:none}

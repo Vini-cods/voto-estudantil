@@ -1,10 +1,20 @@
 # Voz da Escola 2.0
 
-Urna estudantil configurável para escolas, em notebooks com **Windows 10 ou 11**. Funciona sem internet em um único executável C#/.NET Framework, que abre a interface local no navegador. Cada notebook guarda uma urna independente; um pendrive permite distribuir o executável e reunir os resultados ao final.
+Urna estudantil configurável para escolas, para **Windows 10/11 e Android 8 ou superior**. Funciona sem internet: um executável no Windows e um APK no Android. Cada aparelho guarda sua própria urna. Configurações e resultados podem ser transferidos entre as duas versões por arquivos JSON.
 
 No primeiro uso, a escola informa seus dados e cadastra **de 2 a 12 chapas**, com nome, número único de dois dígitos, foto do grupo, representante, propostas e integrantes. Um logotipo pode ser adicionado. Depois de abrir a votação, a configuração fica bloqueada. O aluno informa nome e série/turma, digita os dois dígitos da chapa e confirma a escolha. Os votos ficam em contagens agregadas, com comparecimentos em uma lista separada.
 
-## Usar o aplicativo
+## Android: APK para avaliação da Seduc
+
+Baixe [Voz-da-Escola-Android.apk](releases/Voz-da-Escola-Android.apk). A equipe autorizada da Seduc deve avaliar o aplicativo e realizar a instalação conforme a gestão dos tablets. Requer Android 8 ou superior e Android System WebView/Chrome 80 ou superior. O APK funciona offline, sem permissão de internet, câmera ou acesso amplo aos arquivos.
+
+O cadastro de chapas e a votação são os mesmos da versão Windows. Fotos, configurações e arquivos de resultados usam o seletor de arquivos do Android. Ao baixar um resultado, escolha o destino e conclua o salvamento. Os dados da urna ficam na área privada do app: **não desinstale nem use “Limpar dados” durante uma eleição**.
+
+Após finalizar e exportar os arquivos, **Preparar nova eleição** arquiva uma única cópia final da eleição encerrada dentro do app e cria outra urna vazia. O arquivo interno não substitui as exportações guardadas pela escola. O fechamento não pode ser desfeito. A mesma configuração JSON pode ser usada em tablets e notebooks; os JSON finais podem ser somados em qualquer uma das versões.
+
+Este APK tem assinatura local de avaliação. Preserve a chave local para atualizar a mesma instalação; a Seduc deverá definir uma assinatura institucional estável para distribuição e atualizações de produção. Não é uma publicação na Play Store. Consulte [o guia Android](docs/ANDROID.md), [o roteiro de validação](docs/ANDROID-VALIDACAO.md) e as limitações dos testes antes do uso real.
+
+## Windows: usar o executável
 
 Baixe [UrnaEstudantil.exe](releases/UrnaEstudantil.exe). Em cada notebook, crie uma pasta própria no disco local, copie apenas esse executável e abra-o, sem instalação ou extração.
 
@@ -52,6 +62,20 @@ python tests/test_urna.py --exe releases/UrnaEstudantil.exe --web-dir src/web
 ```
 
 `src/Program.cs` e `src/web/` são as fontes oficiais. A compilação incorpora a interface no executável. O comando com `-Package` atualiza `releases/UrnaEstudantil.exe` e o ZIP completo opcional. `tests/` contém as verificações; `docs/`, os manuais; e `packaging/`, o iniciador de apoio `INICIAR.cmd` e o guia `COMECE-AQUI.txt`. Os distribuíveis devem acompanhar as alterações de código e conteúdo.
+
+## Compilar e verificar o Android
+
+Requer JDK 21, Android SDK com plataforma 36/build-tools 36.0.0 e Gradle 8.13. O plugin Android Gradle está fixado em 8.13.2. Nenhum SDK, cache ou chave privada é incluído no repositório.
+
+```powershell
+powershell -File build-android.ps1
+node tests/test_android_bridge.js
+python tests/android/run_android_tests.py --help
+```
+
+O script aceita caminhos de SDK, JDK e Gradle; consulte `Get-Help ./build-android.ps1 -Detailed`. Ele compila, verifica a assinatura e copia o APK para `releases/`. As fontes nativas estão em `src/android/`; os seis recursos da interface vêm diretamente de `src/web/`. Não altere cópias geradas. A chave de avaliação é gerada localmente em `src/android/.signing/`, que deve ficar fora do Git e ser preservada entre compilações. Não rode `clean` apagando essa pasta.
+
+O manual em PDF é gerado a partir do HTML com `python tools/render_manual.py` (requer ReportLab). Confira todas as páginas renderizadas ao alterá-lo.
 
 ## Dados e limites
 

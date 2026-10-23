@@ -1,0 +1,27 @@
+VOZ DA ESCOLA — ANDROID
+APK para avaliação da SEDUC
+
+REQUISITOS E INSTALAÇÃO
+Android 8.0 ou superior, com Android System WebView/Chrome na versão 80 ou superior. A instalação deve ser autorizada e feita pelo procedimento da TI da instituição.
+
+O APK usa assinatura local de avaliação. Para produção, a TI deve manter uma assinatura fixa e protegida. Atualizações precisam da mesma assinatura; não desinstale o aplicativo para contornar uma incompatibilidade de assinatura.
+
+COMO USAR
+1. Abra o aplicativo e preencha escola, título e identificação desta urna. O logo da escola é opcional.
+2. Cadastre de 2 a 12 chapas, com nomes e números diferentes de dois dígitos. Inclua fotos de grupo, representantes, integrantes e propostas, se desejar.
+3. Salve, revise e confirme a abertura da votação. O cadastro fica bloqueado após abrir.
+4. Cada aluno informa nome e série, digita o número, confere a chapa e confirma o voto. A tela volta ao início.
+5. Ao terminar, finalize a votação e salve o CSV e o JSON usando o seletor de arquivos do Android. Finalizar impede novos votos.
+6. Exporte os arquivos antes de iniciar outra eleição. A função de nova eleição arquiva o estado final anterior dentro do aplicativo e cria uma urna vazia, com nova identidade.
+
+FOTOS, ARQUIVOS E DADOS
+Fotos, importações e exportações usam o seletor de arquivos do Android. O aplicativo não solicita acesso amplo ao armazenamento nem permissão de internet.
+
+Os votos ficam no armazenamento privado do aplicativo. Não limpe seus dados nem o desinstale: isso pode apagar urnas e arquivos internos. Guarde as exportações encerradas em local autorizado pela instituição.
+
+VÁRIOS APARELHOS E WINDOWS
+O JSON de configuração é compatível com a versão Windows. Use a mesma configuração nos aparelhos e dê um nome diferente a cada urna. Importar configuração não importa votos.
+
+Cada aparelho funciona como urna independente. Separe turmas/listas para evitar que um aluno vote em dois aparelhos. Após finalizar todos, reúna os JSONs de resultados e use a soma de urnas. O CSV serve para conferência; a soma usa os JSONs.
+
+Esta entrega é para avaliação. Consulte o registro ANDROID-VALIDACAO.md para os testes efetivamente realizados e suas limitações.

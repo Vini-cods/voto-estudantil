@@ -3,6 +3,11 @@
 /outputs/
 /dist/
 /urna-build/
+/src/android/.gradle/
+/src/android/build/
+/src/android/app/build/
+/src/android/local.properties
+/src/android/.signing/
 
 # A live election's data must never enter source history
 **/[Dd]ados/
@@ -26,6 +31,8 @@
 .env.*
 *.pem
 *.key
+*.jks
+*.keystore
 __pycache__/
 *.pyc
 .vs/

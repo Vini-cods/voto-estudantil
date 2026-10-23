@@ -1,0 +1,76 @@
+plugins {
+    id 'com.android.application'
+}
+
+def webRoot = rootProject.file('../web')
+def assetPaths = [
+    'index.html', 'app.js', 'style.css', 'favicon.svg',
+    'assets/gresp.png', 'assets/estado-sp.png'
+]
+def generatedAssets = layout.buildDirectory.dir('generated/urnaAssets')
+def generateUrnaAssets = tasks.register('generateUrnaAssets', Sync) {
+    from(webRoot) { include(assetPaths) }
+    into(generatedAssets)
+    doFirst {
+        assetPaths.each { path ->
+            if (!new File(webRoot, path).isFile()) {
+                throw new GradleException('Missing canonical web asset: ' + path)
+            }
+        }
+    }
+}
+
+// Keep the local assessment identity across clean builds, outside version control.
+def debugKeyFile = rootProject.file('.signing/debug.keystore')
+def keytoolName = System.getProperty('os.name').toLowerCase().contains('windows') ? 'keytool.exe' : 'keytool'
+def generateLocalDebugKey = tasks.register('generateLocalDebugKey', Exec) {
+    onlyIf { !debugKeyFile.exists() }
+    doFirst { debugKeyFile.parentFile.mkdirs() }
+    commandLine new File(System.getProperty('java.home'), 'bin/' + keytoolName).absolutePath,
+        '-genkeypair', '-noprompt', '-storetype', 'JKS',
+        '-keystore', debugKeyFile.absolutePath, '-storepass', 'android',
+        '-alias', 'androiddebugkey', '-keypass', 'android',
+        '-keyalg', 'RSA', '-keysize', '2048', '-sigalg', 'SHA256withRSA',
+        '-validity', '10000', '-dname', 'CN=Voz da Escola Debug,O=Local,C=BR'
+}
+
+android {
+    namespace 'br.escola.vozdaescola.urna'
+    compileSdk 36
+    buildToolsVersion '36.0.0'
+    defaultConfig {
+        applicationId 'br.escola.vozdaescola.urna'
+        minSdk 26
+        targetSdk 36
+        versionCode 20000
+        versionName '2.0'
+    }
+    signingConfigs {
+        debug {
+            storeFile debugKeyFile
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+    buildTypes {
+        debug {
+            debuggable true
+            signingConfig signingConfigs.debug
+        }
+        release {
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    sourceSets.main.assets.setSrcDirs([generatedAssets])
+    buildFeatures { buildConfig true }
+}
+
+tasks.named('preBuild').configure { dependsOn(generateUrnaAssets) }
+tasks.matching { it.name == 'validateSigningDebug' }.configureEach {
+    dependsOn(generateLocalDebugKey)
+}

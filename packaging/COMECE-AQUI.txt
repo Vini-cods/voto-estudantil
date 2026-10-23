@@ -1,5 +1,5 @@
 VOZ DA ESCOLA - URNA ESTUDANTIL CONFIGURAVEL
-Versao 2.0 - 22/10/2026
+Versao 2.0 - Windows e Android
 
 1. Baixe UrnaEstudantil.exe. Crie uma pasta propria no disco local de cada
    notebook Windows e copie somente o EXE para ela.
@@ -51,3 +51,11 @@ Para outra eleicao, use o EXE em uma pasta nova, sem copiar Dados.
 Ao retomar uma pasta existente, os dados e o estado sao preservados;
 uma urna encerrada continua encerrada e permite consultar os resultados.
 Leia LEIA-ME.html ou Manual-de-uso.pdf para as instrucoes completas.
+
+ANDROID (TABLETS)
+O arquivo instalavel e Voz-da-Escola-Android.apk. A equipe autorizada da
+Seduc deve avaliar e instalar nos aparelhos. Requer Android 8 ou superior
+e Android System WebView/Chrome 80 ou superior. Veja ANDROID-LEIA-ME.txt
+no pacote Android e a pagina 5 do manual. O APK guarda a urna na area
+privada do app: nao desinstale nem limpe os dados durante a eleicao.
+Configuracao e resultados JSON podem ser trocados com a versao Windows.
